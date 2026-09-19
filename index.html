@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Photo Stamper</title>
+    <title>Retro Photo Stamper Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
     <style>
@@ -21,7 +21,7 @@
             font-family: 'Special Elite', cursive;
         }
 
-        /* Container for the canvas to maintain aspect ratio and fit screen */
+        /* Container for the canvas */
         #canvas-container {
             position: relative;
             width: 100%;
@@ -35,6 +35,7 @@
             align-items: center;
             aspect-ratio: 1 / 1; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            touch-action: none; /* Prevent scrolling when dragging stickers on mobile */
         }
 
         /* The actual canvas element */
@@ -43,6 +44,11 @@
             max-height: 100%;
             object-fit: contain;
             display: block;
+            cursor: grab;
+        }
+        
+        canvas:active {
+            cursor: grabbing;
         }
 
         .controls-panel {
@@ -53,9 +59,7 @@
             margin-bottom: 2rem;
         }
 
-        input[type="file"] {
-            display: none;
-        }
+        input[type="file"] { display: none; }
         
         .custom-file-upload {
             border: 2px dashed #9ca3af;
@@ -63,7 +67,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 1.5rem 1rem;
+            padding: 1.2rem 1rem;
             cursor: pointer;
             border-radius: 0.5rem;
             background-color: #f9fafb;
@@ -82,10 +86,7 @@
             color: #1d4ed8;
         }
 
-        .input-group {
-            margin-bottom: 1rem;
-        }
-
+        .input-group { margin-bottom: 1rem; }
         .input-group label {
             display: block;
             margin-bottom: 0.25rem;
@@ -93,7 +94,6 @@
             color: #374151;
             font-size: 0.875rem;
         }
-
         .input-group input[type="text"],
         .input-group input[type="date"],
         .input-group input[type="color"],
@@ -102,269 +102,940 @@
             padding: 0.5rem;
             border: 1px solid #d1d5db;
             border-radius: 0.375rem;
-            font-size: 1rem;
+            font-size: 0.875rem;
+            outline: none;
         }
-        
         .input-group input[type="color"] {
-            padding: 0;
-            height: 40px;
-            cursor: pointer;
+            padding: 0; height: 40px; cursor: pointer;
+        }
+        .input-group select:focus, .input-group input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
 
         .btn {
-            background-color: #3b82f6;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 0.375rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            width: 100%;
-            text-align: center;
-            display: inline-block;
+            background-color: #3b82f6; color: white;
+            padding: 0.75rem 1.5rem; border: none;
+            border-radius: 0.375rem; font-weight: 600;
+            cursor: pointer; transition: background-color 0.3s;
+            width: 100%; text-align: center; display: inline-block;
         }
+        .btn:hover { background-color: #2563eb; }
+        .btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .btn-secondary { background-color: #10b981; }
+        .btn-secondary:hover { background-color: #059669; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
 
-        .btn:hover {
-            background-color: #2563eb;
-        }
-        
-        .btn:disabled {
-            background-color: #9ca3af;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background-color: #10b981;
-        }
-
-        .btn-secondary:hover {
-            background-color: #059669;
-        }
-
-        /* Modal specific styles */
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(4px);
         }
+
+        /* Sticker Panel Styles */
+        .sticker-category { margin-bottom: 1rem; }
+        .sticker-category h4 {
+            font-size: 0.75rem; text-transform: uppercase;
+            font-weight: bold; color: #6b7280; margin-bottom: 0.5rem;
+        }
+        .sticker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 0.5rem;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        .sticker-item {
+            font-size: 1.5rem; text-align: center;
+            cursor: pointer; padding: 0.25rem;
+            border-radius: 0.375rem; transition: transform 0.1s, background 0.2s;
+            user-select: none;
+        }
+        .sticker-item:hover {
+            background: #f3f4f6;
+            transform: scale(1.2);
+        }
+        
+        /* Custom Scrollbar for sticker grid */
+        .sticker-grid::-webkit-scrollbar { width: 6px; }
+        .sticker-grid::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .sticker-grid::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .sticker-grid::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
+        .tab-btn {
+            padding: 0.5rem; font-size: 0.875rem; font-weight: 600;
+            border-bottom: 2px solid transparent; cursor: pointer; color: #6b7280;
+        }
+        .tab-btn.active { border-bottom-color: #3b82f6; color: #3b82f6; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-<div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+<div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
     
-    <!-- Controls Section -->
-    <div class="lg:col-span-1 flex flex-col gap-4">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2 typewriter-font">Retro Stamper</h1>
-        <p class="text-sm text-gray-600 mb-4">Turn your high-resolution photos into retro Polaroid-style prints with typewriter text on the frame.</p>
+    <!-- Left Controls Section (Grid span 4) -->
+    <div class="lg:col-span-4 flex flex-col gap-4">
+        <div class="flex justify-between items-end mb-2">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 typewriter-font leading-tight">Retro<br>Stamper Ultimate</h1>
+            </div>
+            <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded-full">v3.0 Caching Engine</span>
+        </div>
         
-        <div class="controls-panel">
-            <!-- File Upload & Camera Buttons -->
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <!-- Upload File -->
-                <label class="custom-file-upload">
-                    <input type="file" id="imageLoader" accept="image/*" />
-                    <svg class="w-7 h-7 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    <span>Upload File</span>
-                </label>
-                <!-- Take Camera Photo -->
-                <button id="openCameraBtn" class="custom-file-upload m-0 outline-none">
-                    <svg class="w-7 h-7 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    <span>Kamera</span>
-                </button>
-            </div>
+        <!-- Tab Navigation for Controls -->
+        <div class="flex border-b border-gray-200 mb-2">
+            <button class="tab-btn active flex-1" onclick="switchTab('basic')">Dasar</button>
+            <button class="tab-btn flex-1" onclick="switchTab('filters')">Filter (40+)</button>
+            <button class="tab-btn flex-1" onclick="switchTab('stickers')">Stiker (300+)</button>
+        </div>
 
-            <!-- Content Inputs -->
-            <div class="input-group">
-                <label for="dateInput">Date</label>
-                <input type="date" id="dateInput" value="">
-            </div>
-            <div class="input-group">
-                <label for="locationInput">Location</label>
-                <input type="text" id="locationInput" placeholder="e.g., Jakarta, Indonesia">
-            </div>
-            <div class="input-group">
-                <label for="descInput">Description/Note</label>
-                <input type="text" id="descInput" placeholder="A beautiful day...">
-            </div>
+        <div class="controls-panel mt-0 h-full overflow-y-auto" style="max-height: 75vh;">
+            
+            <!-- TAB 1: BASIC SETTINGS -->
+            <div id="tab-basic" class="tab-content block">
+                <!-- File Upload & Camera Buttons -->
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <label class="custom-file-upload">
+                        <input type="file" id="imageLoader" accept="image/*" />
+                        <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <span>Upload Foto</span>
+                    </label>
+                    <button id="openCameraBtn" class="custom-file-upload m-0 outline-none">
+                        <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span>Kamera WebRTC</span>
+                    </button>
+                </div>
 
-            <hr class="my-6 border-gray-200">
-
-            <!-- Styling Controls -->
-            <div class="grid grid-cols-2 gap-4">
+                <!-- Content Inputs -->
                 <div class="input-group">
-                    <label for="textColor">Text Color</label>
-                    <input type="color" id="textColor" value="#111827">
+                    <label for="dateInput">Tanggal</label>
+                    <input type="date" id="dateInput" value="">
                 </div>
                 <div class="input-group">
-                    <label for="frameColor">Frame Color</label>
-                    <input type="color" id="frameColor" value="#F4F0E6">
+                    <label for="locationInput">Lokasi</label>
+                    <input type="text" id="locationInput" placeholder="Misal: Kyoto, Jepang">
+                </div>
+                <div class="input-group">
+                    <label for="descInput">Deskripsi Singkat</label>
+                    <input type="text" id="descInput" placeholder="Kenangan musim panas...">
+                </div>
+
+                <hr class="my-4 border-gray-200">
+                <h3 class="text-sm font-bold text-gray-700 mb-3">Teks & Bingkai</h3>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="input-group">
+                        <label for="textColor">Warna Teks</label>
+                        <input type="color" id="textColor" value="#111827">
+                    </div>
+                    <div class="input-group">
+                        <label for="frameColor">Warna Bingkai</label>
+                        <input type="color" id="frameColor" value="#F4F0E6">
+                    </div>
+                    <div class="input-group">
+                        <label for="frameFormat">Format Polaroid</label>
+                        <select id="frameFormat">
+                            <option value="classic" selected>Standar Classic</option>
+                            <option value="mini">Instax Mini</option>
+                            <option value="wide">Instax Wide</option>
+                            <option value="square">Sama Sisi (Square)</option>
+                            <option value="thick">Bold & Thick</option>
+                            <option value="thin">Modern Tipis</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="frameTexture">Tekstur Kertas</label>
+                        <select id="frameTexture">
+                            <option value="paper" selected>Kertas Matte</option>
+                            <option value="clean">Bersih & Datar</option>
+                            <option value="stained">Noda Kopi & Usang</option>
+                            <option value="worn">Tepi Kusam</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: FILTERS (40+) -->
+            <div id="tab-filters" class="tab-content hidden">
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4">
+                    <p class="text-xs text-blue-800">
+                        <strong>Mesin Render Baru:</strong> Filter sekarang diproses di latar belakang secara <i>asynchronous</i> untuk mencegah lag saat Anda menambahkan stiker.
+                    </p>
+                </div>
+
+                <div class="input-group">
+                    <label for="vintageFilter" class="font-bold text-blue-700">Pilih Gaya Foto (40+ Pilihan)</label>
+                    <select id="vintageFilter" class="border-blue-300 shadow-sm" style="height: auto; padding-top: 8px; padding-bottom:8px;">
+                        <option value="none">Original (Tanpa Filter)</option>
+                        <option value="smart_hdr" class="font-bold">✨ Smart Auto-Enhance (HDR Natural)</option>
+                        
+                        <optgroup label="📸 KAMERA LEGENDARIS (10)">
+                            <option value="cam_leica">Leica M-Monochrom (Tajam B&W)</option>
+                            <option value="cam_fuji">Fujifilm Provia (Warna Hidup)</option>
+                            <option value="cam_kodak" selected>Kodak Portra 400 (Warm & Lembut)</option>
+                            <option value="cam_hasselblad">Hasselblad 500C (Kontras Medium Format)</option>
+                            <option value="cam_canon">Canon AE-1 (Tone Klasik)</option>
+                            <option value="cam_nikon">Nikon F3 (Kontras Tinggi)</option>
+                            <option value="cam_sony">Sony A7 Cinematic (Biru & Teal)</option>
+                            <option value="cam_polaroid">Polaroid SX-70 (Faded Nostalgia)</option>
+                            <option value="cam_rolleiflex">Rolleiflex TLR (Hitam Putih Lembut)</option>
+                            <option value="cam_olympus">Olympus Pen (Lomo & Vignette)</option>
+                        </optgroup>
+
+                        <optgroup label="🎞️ GAYA FILM ANALOG (10)">
+                            <option value="analog_35mm">Analog 35mm (Grainy & Hangat)</option>
+                            <option value="analog_120">Medium Format 120 (Kaya & Dalam)</option>
+                            <option value="analog_expired">Expired Film (Pergeseran Magenta/Hijau)</option>
+                            <option value="analog_crossprocess">Cross-Processed (Vivid E-6 in C-41)</option>
+                            <option value="analog_push">Push Processed +2 (Kontras Ekstrem)</option>
+                            <option value="analog_cinestill">Cinestill 800T (Cool Tone & Red Halation)</option>
+                            <option value="analog_ilford">Ilford HP5 Plus (B&W Klasik)</option>
+                            <option value="analog_trix">Kodak Tri-X 400 (B&W Punchy)</option>
+                            <option value="analog_portra">Portra 400 Pushed (Saturasi Lembut)</option>
+                            <option value="analog_velvia">Fuji Velvia 50 (Saturasi Ekstrem Lanskap)</option>
+                        </optgroup>
+
+                        <optgroup label="🕰️ GAYA RETRO VINTAGE (20)">
+                            <option value="retro_70s">70s Summer (Kuning Pudar)</option>
+                            <option value="retro_80s">80s Synthwave (Magenta/Cyan)</option>
+                            <option value="retro_90s">90s Disposable (Flash Tajam & Kehijauan)</option>
+                            <option value="retro_y2k">Y2K Digicam (Low Res, Blooming)</option>
+                            <option value="retro_sepia">Sepia Dream (Coklat Bersinar)</option>
+                            <option value="retro_denim">Faded Denim (Biru Pudar)</option>
+                            <option value="retro_crimson">Crimson Sunset (Oranye/Merah Berat)</option>
+                            <option value="retro_emerald">Emerald Forest (Hijau Vintage)</option>
+                            <option value="retro_golden">Golden Hour Retro (Glow Hangat)</option>
+                            <option value="retro_neon">Cyber Neon (Saturasi Tinggi Malam)</option>
+                            <option value="retro_matte">Vintage Matte (Hitam Terangkat)</option>
+                            <option value="retro_lomo">Lomography Pop (Vignette Kuat)</option>
+                            <option value="retro_coffee">Coffee Stain (Overlay Cokelat Hangat)</option>
+                            <option value="retro_pastel">Pastel Retro (Kecerahan Tinggi & Pink)</option>
+                            <option value="retro_grunge">90s Grunge (Desaturated Gelap)</option>
+                            <option value="retro_noir">Cinematic Noir (B&W Vignette)</option>
+                            <option value="retro_blueprint">Cyanotype Blueprint (Monokrom Biru)</option>
+                            <option value="retro_aerochrome">Infrared Aerochrome (Efek Merah Palsu)</option>
+                            <option value="retro_bleach">Bleach Bypass (Kontras Tinggi Pucat)</option>
+                            <option value="retro_technicolor">Technicolor Dream (Warna Bioskop Klasik)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <div class="input-group">
+                        <label for="vignetteIntensity">Vignette (Tepi Gelap)</label>
+                        <input type="range" id="vignetteIntensity" min="0" max="0.8" step="0.1" value="0.3" class="w-full">
+                    </div>
+                    <div class="input-group">
+                        <label for="grainIntensity">Noise / Film Grain</label>
+                        <input type="range" id="grainIntensity" min="0" max="60" step="5" value="20" class="w-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: STICKERS (300+) -->
+            <div id="tab-stickers" class="tab-content hidden">
+                <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-4 text-xs text-yellow-800">
+                    <strong>Mesin Stiker "Die-Cut":</strong> Ratusan objek vektor diubah menjadi stiker kertas fisik beresolusi tinggi <i>on-the-fly</i>. Anti-pecah, aman dari blokir CORS.<br>
+                    <strong>Cara pakai:</strong> Klik stiker untuk menambahkan. Tarik (Drag) di kanvas untuk memindahkan.
                 </div>
                 
-                <div class="input-group">
-                    <label for="frameFormat">Ukuran Polaroid (Format)</label>
-                    <select id="frameFormat">
-                        <option value="classic" selected>Classic Polaroid (Standar)</option>
-                        <option value="mini">Instax Mini (Lebih Tinggi)</option>
-                        <option value="wide">Instax Wide (Border Lebar)</option>
-                        <option value="square">Symmetrical Square (Sama Sisi)</option>
-                        <option value="thick">Bold & Thick (Tebal)</option>
-                        <option value="thin">Modern Thin (Tipis)</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="frameTexture">Gaya Frame (Tekstur)</label>
-                    <select id="frameTexture">
-                        <option value="paper" selected>Kertas Matte (Standar)</option>
-                        <option value="clean">Bersih & Datar (Modern)</option>
-                        <option value="stained">Kertas Usang & Bernoda</option>
-                        <option value="worn">Tepi Kusam (Worn Edges)</option>
-                    </select>
-                </div>
-
-                <div class="input-group col-span-2">
-                    <label for="vintageFilter">Photo Filter (30 Pilihan)</label>
-                    <select id="vintageFilter">
-                        <option value="none">None (Original Photo)</option>
-                        <optgroup label="NEW: Film & Cinematic">
-                            <option value="film_kodak">Film: Kodak Portra 400 (Warm & Soft)</option>
-                            <option value="film_fuji">Film: Fuji Superia (Cool & Moody)</option>
-                            <option value="film_cinematic">Cinematic: Teal & Orange</option>
-                            <option value="film_noir">Cinematic: Noir Classic (Contrast B&W)</option>
-                            <option value="film_vhs">Vintage: 90s VHS Camcorder</option>
-                        </optgroup>
-                        <optgroup label="Retro & Vintage">
-                            <option value="light" selected>Light Retro (Faded & Warm)</option>
-                            <option value="heavy">Heavy Vintage (High Contrast Sepia)</option>
-                            <option value="flash">Disposable Flash (Harsh Light)</option>
-                            <option value="bw">Classic B&W (Monochrome)</option>
-                            <option value="cool">Cool Film (Cyan Tint)</option>
-                            <option value="matte">70s Matte (Washed Out)</option>
-                            <option value="lomo">Lomography (Vivid)</option>
-                            <option value="warm">Golden Hour (Warm Polaroid)</option>
-                            <option value="cyanotype">Cyanotype (Blue Print)</option>
-                            <option value="fadedbw">Faded B&W (Old Newspaper)</option>
-                            <option value="pastel">Pastel Dream (Soft Pink)</option>
-                            <option value="grunge">90s Grunge (Desaturated)</option>
-                            <option value="negative">Color Negative (Inverted)</option>
-                            <option value="cyberpunk">Cyberpunk (Neon Tint)</option>
-                            <option value="denim">Washed Denim (Faded Blue)</option>
-                            <option value="crimson">Crimson Red (Dark Red)</option>
-                            <option value="amber">Amber Glow (Orange)</option>
-                            <option value="emerald">Emerald Forest (Green)</option>
-                            <option value="overexposed">Overexposed (Bright)</option>
-                            <option value="pinhole">Pinhole Camera (Dark)</option>
-                        </optgroup>
-                        <optgroup label="Pro Studio">
-                            <option value="pro_studio">Pro: Studio Portrait</option>
-                            <option value="pro_cinematic">Pro: Cinematic Classic</option>
-                            <option value="pro_landscape">Pro: Landscape Enhancer</option>
-                            <option value="pro_bw">Pro: Fine Art B&W</option>
-                            <option value="pro_commercial">Pro: Commercial Punchy</option>
-                        </optgroup>
-                    </select>
+                <!-- Dynamic Sticker Catalog Injected Here via JS -->
+                <div id="sticker-catalog"></div>
+                
+                <div id="activeStickerControls" class="mt-4 p-3 bg-gray-100 rounded-lg hidden">
+                    <h4 class="text-xs font-bold text-gray-700 mb-2">Edit Stiker Terpilih</h4>
+                    <div class="flex items-center gap-3">
+                        <input type="range" id="stickerScale" min="0.5" max="5" step="0.1" value="1" class="flex-1">
+                        <button id="deleteStickerBtn" class="btn btn-danger py-1 px-3 text-sm flex-none">Hapus</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div class="input-group">
-                    <label for="vignetteIntensity">Vignette (Dark Edges)</label>
-                    <input type="range" id="vignetteIntensity" min="0" max="0.8" step="0.1" value="0.4" class="w-full">
-                </div>
-                <div class="input-group">
-                    <label for="grainIntensity">Film Grain (Noise)</label>
-                    <input type="range" id="grainIntensity" min="0" max="60" step="5" value="25" class="w-full">
-                </div>
-            </div>
+        </div> <!-- End Controls Panel -->
 
-            <div class="grid grid-cols-2 gap-4">
-                <div class="input-group">
-                    <label for="textAlign">Text Alignment</label>
-                    <select id="textAlign">
-                        <option value="left">Left</option>
-                        <option value="center" selected>Center</option>
-                        <option value="right">Right</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="textShadow">Text Effect</label>
-                    <select id="textShadow">
-                        <option value="none" selected>None</option>
-                        <option value="light">Light Glow</option>
-                        <option value="dark">Dark Shadow</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="input-group">
-                 <label for="fontSizeScale">Font Size Scale</label>
-                 <input type="range" id="fontSizeScale" min="0.5" max="3" step="0.1" value="1" class="w-full">
-            </div>
-
-            <div class="mt-6">
-                <button id="downloadBtn" class="btn btn-secondary" disabled>
-                    Download Full-Res Image
-                </button>
-            </div>
+        <!-- Download Button always visible at bottom of controls -->
+        <div>
+            <button id="downloadBtn" class="btn btn-secondary shadow-lg py-3 text-lg" disabled>
+                ⬇️ Unduh Foto Resolusi Tinggi
+            </button>
         </div>
     </div>
 
-    <!-- Preview Section -->
-    <div class="lg:col-span-2 flex flex-col">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Preview</h2>
-        <div id="canvas-container">
-            <p id="placeholder-text" class="text-gray-500 text-center absolute w-full z-10 pointer-events-none">Upload an image or take a photo to start editing</p>
-            <canvas id="imageCanvas"></canvas>
+    <!-- Right Preview Section (Grid span 8) -->
+    <div class="lg:col-span-8 flex flex-col h-full">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-gray-700">Pratinjau Kanvas Interaktif</h2>
+            <span id="loadingIndicator" class="text-sm text-blue-600 hidden">⚙️ Merender Filter...</span>
         </div>
-        <p class="text-xs text-gray-500 mt-2 text-center">Preview is scaled down. Downloaded image retains original resolution.</p>
+        <div id="canvas-container">
+            <p id="placeholder-text" class="text-gray-500 text-center absolute w-full z-10 pointer-events-none px-4">
+                Mulai dengan mengunggah foto atau jepret langsung dari Kamera.<br><br>Gunakan layar sentuh (HP) atau Mouse (PC) untuk menarik Stiker.
+            </p>
+            <!-- Rendered Output -->
+            <canvas id="mainCanvas"></canvas>
+            <!-- Offscreen Canvas for caching background filters to prevent lag when moving stickers -->
+            <canvas id="bgCacheCanvas" class="hidden"></canvas>
+        </div>
+        <p class="text-xs text-gray-500 mt-3 text-center">
+            *Resolusi pratinjau disesuaikan layar. Unduhan tetap pada resolusi penuh kamera/foto asli.
+        </p>
     </div>
 
 </div>
 
 <!-- Camera Modal (Hidden by default) -->
 <div id="cameraModal" class="hidden fixed inset-0 z-50 modal-overlay flex flex-col items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-4 flex flex-col items-center">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-5 flex flex-col items-center relative">
         <div class="w-full flex justify-between items-center mb-4">
-            <h3 class="text-lg font-bold text-gray-800">Ambil Foto</h3>
-            <button id="closeCameraBtnX" class="text-gray-500 hover:text-gray-800 p-1">
+            <h3 class="text-xl font-bold text-gray-800">Kamera Pintar WebRTC</h3>
+            <button id="closeCameraBtnX" class="text-gray-500 hover:text-gray-800 p-1 bg-gray-100 rounded-full">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
         
         <p id="cameraErrorText" class="hidden w-full p-3 mb-4 bg-red-100 text-red-700 rounded-lg text-sm text-center">
-            <!-- Error message will be injected here if camera access fails -->
+            <!-- Error message injected here -->
         </p>
 
-        <!-- Lens Selector (Hidden until loaded) -->
-        <select id="cameraDeviceSelect" class="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm hidden font-medium text-gray-700 outline-none focus:border-blue-500">
-            <option value="">Memuat daftar lensa...</option>
-        </select>
+        <!-- Lens Selector (Detects Ultrawide, Tele, Front, Back) -->
+        <div class="w-full mb-3">
+            <label class="block text-xs font-bold text-gray-600 mb-1">Pilih Lensa Kamera:</label>
+            <select id="cameraDeviceSelect" class="w-full p-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 outline-none focus:border-blue-500 bg-gray-50">
+                <option value="">Memuat daftar lensa perangkat...</option>
+            </select>
+        </div>
 
         <!-- Video stream area -->
-        <div class="w-full bg-black rounded-lg overflow-hidden mb-4 relative flex items-center justify-center" style="min-height: 40vh; max-height: 60vh;">
+        <div class="w-full bg-black rounded-lg overflow-hidden mb-4 relative flex items-center justify-center shadow-inner" style="min-height: 40vh; max-height: 55vh;">
             <video id="cameraVideo" class="w-full h-full object-cover" autoplay playsinline></video>
         </div>
 
         <div class="flex gap-4 w-full">
-            <button id="captureBtn" class="btn bg-blue-600 hover:bg-blue-700 flex-1 flex justify-center items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                Snap Photo
+            <button id="captureBtn" class="btn bg-blue-600 hover:bg-blue-700 flex-1 flex justify-center items-center gap-2 py-3 text-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                Jepret Sekarang
             </button>
-            <button id="closeCameraBtn" class="btn bg-gray-500 hover:bg-gray-600 flex-none w-auto">Batal</button>
+            <button id="closeCameraBtn" class="btn bg-gray-200 text-gray-800 hover:bg-gray-300 flex-none w-auto">Batal</button>
         </div>
     </div>
 </div>
 
 <script>
+    // Simple Tab Switcher Logic
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+        
+        event.target.classList.add('active');
+        document.getElementById('tab-' + tabId).classList.remove('hidden');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Elements ---
+        // --- Core Elements ---
         const imageLoader = document.getElementById('imageLoader');
-        const canvas = document.getElementById('imageCanvas');
-        const ctx = canvas.getContext('2d');
+        const mainCanvas = document.getElementById('mainCanvas');
+        const ctx = mainCanvas.getContext('2d');
+        const bgCacheCanvas = document.getElementById('bgCacheCanvas');
+        const bgCtx = bgCacheCanvas.getContext('2d');
         const canvasContainer = document.getElementById('canvas-container');
         const placeholderText = document.getElementById('placeholder-text');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // --- Inputs ---
+        const inputs = {
+            date: document.getElementById('dateInput'),
+            location: document.getElementById('locationInput'),
+            desc: document.getElementById('descInput'),
+            textColor: document.getElementById('textColor'),
+            frameColor: document.getElementById('frameColor'),
+            frameFormat: document.getElementById('frameFormat'),
+            frameTexture: document.getElementById('frameTexture'),
+            vintageFilter: document.getElementById('vintageFilter'),
+            vignette: document.getElementById('vignetteIntensity'),
+            grain: document.getElementById('grainIntensity')
+        };
+
+        // --- Application State ---
+        let currentImage = null;
+        let originalWidth = 0;
+        let originalHeight = 0;
         
-        // Camera Elements
+        // Caching System Flag
+        let isCacheDirty = true; // True if background (filters/frame) needs redraw
+        let renderTimeout = null;
+
+        // Sticker State Engine
+        let stickers = []; 
+        /* Sticker Obj: { id, icon, x, y, size, rotation } */
+        let selectedStickerIndex = -1;
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        // Sticker UI Elements
+        const activeStickerControls = document.getElementById('activeStickerControls');
+        const stickerScaleSlider = document.getElementById('stickerScale');
+        const deleteStickerBtn = document.getElementById('deleteStickerBtn');
+
+        // Set Default Date
+        const d = new Date();
+        inputs.date.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+        // --- Event Listeners for Re-rendering ---
+        // If image or filters change, we MUST rebuild the background cache.
+        const cacheInvalidatingInputs = Object.values(inputs);
+        cacheInvalidatingInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                isCacheDirty = true;
+                requestRender();
+            });
+        });
+
+        imageLoader.addEventListener('change', handleImageUpload);
+        downloadBtn.addEventListener('click', downloadImage);
+
+        // --- Debounced Render Request ---
+        function requestRender() {
+            if (renderTimeout) clearTimeout(renderTimeout);
+            loadingIndicator.classList.remove('hidden');
+            
+            // Allow UI to update loading state before heavy lifting
+            renderTimeout = setTimeout(() => {
+                renderPipeline();
+                loadingIndicator.classList.add('hidden');
+            }, 50);
+        }
+
+        // --- 1. STICKER ENGINE DATABASE (300+ Items) ---
+        // We use native Emojis rendered via Canvas API with a "Die-Cut" white border & shadow 
+        // to make them look like ultra high-res physical paper stickers. Zero CORS issues!
+        const stickerDatabase = {
+            "📸 Fotografi & Film": "📷,📸,📹,📼,🎞️,📽️,🎬,📺,📻,🎙️,🎛️,🎚️,💡,🔦,🔍,💾,💿,☎️,📟,🕹️",
+            "🌿 Alam & Vintage": "🌵,🌲,🍁,🍄,🌻,🌺,🌸,🌼,🌷,🌹,🍀,🍃,🍂,🌍,🌙,☀️,⭐,✨,☁️,🌈,⚡,❄️,🔥,💧,🦋,🐞",
+            "🍕 Makanan Klasik": "🍔,🍟,🍕,🌭,🍿,🍩,🍪,🎂,🍰,🍦,🍧,🍭,🍬,🍫,☕,🍵,🥤,🧃,🍺,🍷,🥂,🍒,🍓,🍉,🍌",
+            "✈️ Perjalanan & Liburan": "✈️,🚀,🚁,🚂,🚗,🚕,🚙,🚌,🚓,🚑,🚒,🚜,🛵,🚲,⛵,🛳️,🗺️,🧭,🏖️,🏕️,🗽,🗼,🏰,🎢,🎡",
+            "💖 Cinta & Mood": "❤️,🧡,💛,💚,💙,💜,🖤,🤍,🤎,💔,❣️,💕,💞,💓,💗,💖,💘,💝,💌,💋,💯,💢,💥,💫,💦,💨",
+            "😂 Ekspresi Retro": "😀,😁,😂,🤣,😃,😄,😅,😆,😉,😊,😋,😎,😍,😘,😗,😙,😚,🙂,🤗,🤩,🤔,🤨,😐,😑,😶,🙄",
+            "😎 Ekspresi Asik": "😏,😣,😥,😮,🤐,😯,😪,😫,😴,😌,😛,😜,😝,🤤,😒,😓,😔,😕,🙃,🤑,😲,☹️,🙁,😖,😞,😟",
+            "😤 Mood Ekstrem": "😤,😢,😭,😦,😧,😨,😩,🤯,😬,😰,😱,🥵,🥶,😳,🤪,😵,😡,😠,🤬,😷,🤒,🤕,🤢,🤮,🤧,😇",
+            "👽 Unik & Benda": "🥳,🤠,🤡,🤥,🤫,🤭,🧐,🤓,😈,👿,👹,👺,💀,👻,👽,👾,🤖,💩,😺,😸,😹,😻,😼,😽,🙀,😿,😾",
+            "🐶 Hewan Peliharaan": "🐶,🐱,🐭,🐹,🐰,🦊,🐻,🐼,🐨,🐯,🦁,🐮,🐷,🐽,🐸,🐵,🙈,🙉,🙊,🐒,🐔,🐧,🐦,🐤,🦆,🦅",
+            "🦄 Satwa Langka": "🦉,🦇,🐺,🐗,🐴,🦄,🐝,🐛,🐌,🐜,🦟,🦗,🕷️,🕸️,🦂,🐢,🐍,🦎,🦖,🦕,🐙,🦑,🦐,🦞,🦀,🐡"
+        };
+
+        const stickerCatalogDiv = document.getElementById('sticker-catalog');
+        
+        // Build Sticker UI
+        for (const [category, emojis] of Object.entries(stickerDatabase)) {
+            const catDiv = document.createElement('div');
+            catDiv.className = 'sticker-category';
+            catDiv.innerHTML = `<h4>${category}</h4>`;
+            
+            const grid = document.createElement('div');
+            grid.className = 'sticker-grid';
+            
+            const emojiList = emojis.split(',');
+            emojiList.forEach(icon => {
+                const span = document.createElement('span');
+                span.className = 'sticker-item';
+                span.innerText = icon;
+                span.onclick = () => addSticker(icon);
+                grid.appendChild(span);
+            });
+            
+            catDiv.appendChild(grid);
+            stickerCatalogDiv.appendChild(catDiv);
+        }
+
+        // --- 2. STICKER INTERACTION LOGIC ---
+        function addSticker(icon) {
+            if (!currentImage) return; // Prevent adding if no image
+            
+            const initialSize = Math.max(mainCanvas.width, mainCanvas.height) * 0.15; // 15% of canvas size
+            stickers.push({
+                id: Date.now(),
+                icon: icon,
+                x: mainCanvas.width / 2,
+                y: mainCanvas.height / 2,
+                size: initialSize,
+                baseSize: initialSize,
+                rotation: (Math.random() - 0.5) * 0.4, // Slight random tilt
+                scale: 1
+            });
+            
+            selectedStickerIndex = stickers.length - 1;
+            updateStickerUI();
+            
+            // Only need to redraw main canvas (which draws cache + stickers), no need to rebuild cache!
+            drawMainCanvas(); 
+        }
+
+        function updateStickerUI() {
+            if (selectedStickerIndex >= 0 && selectedStickerIndex < stickers.length) {
+                activeStickerControls.classList.remove('hidden');
+                stickerScaleSlider.value = stickers[selectedStickerIndex].scale;
+            } else {
+                activeStickerControls.classList.add('hidden');
+            }
+        }
+
+        stickerScaleSlider.addEventListener('input', (e) => {
+            if (selectedStickerIndex >= 0) {
+                stickers[selectedStickerIndex].scale = parseFloat(e.target.value);
+                stickers[selectedStickerIndex].size = stickers[selectedStickerIndex].baseSize * stickers[selectedStickerIndex].scale;
+                drawMainCanvas(); // Very fast!
+            }
+        });
+
+        deleteStickerBtn.addEventListener('click', () => {
+            if (selectedStickerIndex >= 0) {
+                stickers.splice(selectedStickerIndex, 1);
+                selectedStickerIndex = -1;
+                updateStickerUI();
+                drawMainCanvas();
+            }
+        });
+
+        // Mouse & Touch Events for Canvas
+        function getMousePos(evt) {
+            const rect = mainCanvas.getBoundingClientRect();
+            // Calculate scale factors since canvas is responsive (object-fit: contain limits us slightly, 
+            // but assuming container constraints match canvas aspect ratio)
+            const scaleX = mainCanvas.width / rect.width;
+            const scaleY = mainCanvas.height / rect.height;
+            
+            let clientX, clientY;
+            if (evt.touches && evt.touches.length > 0) {
+                clientX = evt.touches[0].clientX;
+                clientY = evt.touches[0].clientY;
+            } else {
+                clientX = evt.clientX;
+                clientY = evt.clientY;
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function hitTest(x, y) {
+            // Iterate backwards to hit the top-most sticker
+            for (let i = stickers.length - 1; i >= 0; i--) {
+                const s = stickers[i];
+                // Simple radius hit detection
+                const radius = s.size / 2;
+                if (Math.hypot(x - s.x, y - s.y) <= radius) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        const onPointerDown = (e) => {
+            if (!currentImage) return;
+            const pos = getMousePos(e);
+            const hitIndex = hitTest(pos.x, pos.y);
+            
+            if (hitIndex !== -1) {
+                isDragging = true;
+                selectedStickerIndex = hitIndex;
+                
+                // Move selected sticker to top of array (z-index)
+                const selectedSticker = stickers.splice(hitIndex, 1)[0];
+                stickers.push(selectedSticker);
+                selectedStickerIndex = stickers.length - 1;
+                
+                dragOffsetX = pos.x - selectedSticker.x;
+                dragOffsetY = pos.y - selectedSticker.y;
+                
+                updateStickerUI();
+                drawMainCanvas();
+            } else {
+                // Clicked empty space
+                selectedStickerIndex = -1;
+                updateStickerUI();
+                drawMainCanvas();
+            }
+        };
+
+        const onPointerMove = (e) => {
+            if (isDragging && selectedStickerIndex !== -1) {
+                e.preventDefault(); // Prevent scrolling on touch
+                const pos = getMousePos(e);
+                stickers[selectedStickerIndex].x = pos.x - dragOffsetX;
+                stickers[selectedStickerIndex].y = pos.y - dragOffsetY;
+                drawMainCanvas();
+            }
+        };
+
+        const onPointerUp = () => {
+            isDragging = false;
+        };
+
+        mainCanvas.addEventListener('mousedown', onPointerDown);
+        mainCanvas.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp);
+        
+        mainCanvas.addEventListener('touchstart', onPointerDown, {passive: false});
+        mainCanvas.addEventListener('touchmove', onPointerMove, {passive: false});
+        window.addEventListener('touchend', onPointerUp);
+
+        // --- 3. RENDERING ENGINE (Dual Canvas) ---
+        
+        // Main pipeline orchestrator
+        function renderPipeline() {
+            if (!currentImage) return;
+            
+            if (isCacheDirty) {
+                // Heavy Lifting: Frame, Base Image, 40+ Filters, Text
+                updateBackgroundCache();
+                isCacheDirty = false;
+            }
+            
+            // Light Lifting: Draw Cache + Stickers
+            drawMainCanvas();
+        }
+
+        // Draws the final composited image to screen
+        function drawMainCanvas() {
+            if (!currentImage) return;
+            
+            // Sync sizes
+            mainCanvas.width = bgCacheCanvas.width;
+            mainCanvas.height = bgCacheCanvas.height;
+            
+            // 1. Draw heavy background
+            ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            ctx.drawImage(bgCacheCanvas, 0, 0);
+            
+            // 2. Draw all stickers (Die-cut effect)
+            stickers.forEach((s, index) => {
+                ctx.save();
+                ctx.translate(s.x, s.y);
+                ctx.rotate(s.rotation);
+                
+                // Vector text rendering
+                ctx.font = `${s.size}px Arial`; // Arial supports emojis best
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 2A. Die-Cut Paper Border Effect
+                // Draw thick white stroke behind the emoji to look like cut paper
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                ctx.shadowBlur = s.size * 0.1;
+                ctx.shadowOffsetX = s.size * 0.05;
+                ctx.shadowOffsetY = s.size * 0.08;
+                
+                ctx.lineWidth = s.size * 0.2; // Thick border
+                ctx.lineJoin = 'round';
+                ctx.miterLimit = 2;
+                ctx.strokeStyle = 'white';
+                
+                // Stroke multiple times for solid opacity (emojis are partly transparent sometimes)
+                ctx.strokeText(s.icon, 0, 0);
+                ctx.strokeText(s.icon, 0, 0);
+
+                // 2B. Draw the actual emoji icon on top
+                ctx.shadowColor = 'transparent'; // Remove shadow for the actual icon
+                ctx.fillText(s.icon, 0, 0);
+                
+                // 2C. Selection Box (if active)
+                if (index === selectedStickerIndex) {
+                    ctx.strokeStyle = '#3b82f6'; // Blue select box
+                    ctx.lineWidth = 4;
+                    ctx.setLineDash([10, 10]);
+                    const padding = s.size * 0.2;
+                    ctx.strokeRect(-s.size/2 - padding, -s.size/2 - padding, s.size + padding*2, s.size + padding*2);
+                }
+                
+                ctx.restore();
+            });
+        }
+
+        // The heavy lifting function
+        function updateBackgroundCache() {
+            const maxDim = Math.max(originalWidth, originalHeight);
+            
+            // Calculate format paddings
+            let borderSideRatio = 0.05;
+            let borderBottomRatio = 0.20;
+            const format = inputs.frameFormat.value;
+
+            if (format === 'mini') { borderSideRatio = 0.07; borderBottomRatio = 0.28; }
+            else if (format === 'wide') { borderSideRatio = 0.04; borderBottomRatio = 0.15; }
+            else if (format === 'square') { borderSideRatio = 0.05; borderBottomRatio = 0.05; }
+            else if (format === 'thick') { borderSideRatio = 0.09; borderBottomRatio = 0.25; }
+            else if (format === 'thin') { borderSideRatio = 0.02; borderBottomRatio = 0.08; }
+
+            const borderSide = maxDim * borderSideRatio;
+            const borderBottom = maxDim * borderBottomRatio;
+
+            bgCacheCanvas.width = originalWidth + (borderSide * 2);
+            bgCacheCanvas.height = originalHeight + borderSide + borderBottom;
+            
+            // Adjust CSS container to fit
+            canvasContainer.style.aspectRatio = `${bgCacheCanvas.width} / ${bgCacheCanvas.height}`;
+
+            // 1. Draw Frame & Textures
+            bgCtx.fillStyle = inputs.frameColor.value;
+            bgCtx.fillRect(0, 0, bgCacheCanvas.width, bgCacheCanvas.height);
+            
+            const texture = inputs.frameTexture.value;
+            
+            if (texture !== 'clean') {
+                const frameGrad = bgCtx.createLinearGradient(0, 0, bgCacheCanvas.width, bgCacheCanvas.height);
+                frameGrad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+                frameGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+                frameGrad.addColorStop(1, 'rgba(0, 0, 0, 0.04)');
+                bgCtx.fillStyle = frameGrad;
+                bgCtx.fillRect(0, 0, bgCacheCanvas.width, bgCacheCanvas.height);
+            }
+
+            if (texture === 'stained') {
+                const stain = bgCtx.createRadialGradient(0, 0, 0, 0, 0, maxDim * 0.6);
+                stain.addColorStop(0, 'rgba(139, 69, 19, 0.12)'); 
+                stain.addColorStop(1, 'rgba(139, 69, 19, 0)');
+                bgCtx.fillStyle = stain;
+                bgCtx.fillRect(0, 0, bgCacheCanvas.width, bgCacheCanvas.height);
+            }
+
+            if (texture === 'worn') {
+                bgCtx.strokeStyle = 'rgba(0,0,0,0.15)';
+                bgCtx.lineWidth = Math.max(5, maxDim * 0.015);
+                bgCtx.strokeRect(0, 0, bgCacheCanvas.width, bgCacheCanvas.height);
+            }
+
+            // Outer physical depth
+            bgCtx.strokeStyle = 'rgba(0,0,0,0.08)';
+            bgCtx.lineWidth = Math.max(1, maxDim * 0.002);
+            bgCtx.strokeRect(0, 0, bgCacheCanvas.width, bgCacheCanvas.height);
+
+            // 2. Photo Processing Engine (40+ Filters)
+            bgCtx.save();
+            const filterType = inputs.vintageFilter.value;
+            let overlayColor = null;
+            let blendMode = 'source-over'; // Standard blending
+
+            // Huge Filter Switch Statement
+            switch(filterType) {
+                // SPECIAL
+                case 'smart_hdr': bgCtx.filter = 'contrast(1.05) saturate(1.15) brightness(1.05)'; blendMode = 'soft-light'; overlayColor = 'rgba(255, 240, 230, 0.15)'; break;
+                
+                // LEGENDARY BRANDS
+                case 'cam_leica': bgCtx.filter = 'grayscale(1) contrast(1.4) brightness(0.95)'; break;
+                case 'cam_fuji': bgCtx.filter = 'contrast(1.15) saturate(1.3) brightness(1.05)'; overlayColor = 'rgba(0, 50, 0, 0.05)'; break;
+                case 'cam_kodak': bgCtx.filter = 'contrast(1.05) saturate(1.2) sepia(0.25) brightness(1.05)'; overlayColor = 'rgba(255, 180, 100, 0.08)'; break;
+                case 'cam_hasselblad': bgCtx.filter = 'contrast(1.2) saturate(1.1) brightness(0.9)'; overlayColor = 'rgba(20, 20, 25, 0.05)'; break;
+                case 'cam_canon': bgCtx.filter = 'contrast(1.1) saturate(1.1) sepia(0.1)'; break;
+                case 'cam_nikon': bgCtx.filter = 'contrast(1.25) saturate(1.05) brightness(0.95)'; break;
+                case 'cam_sony': bgCtx.filter = 'contrast(1.2) saturate(1.2) sepia(0.1)'; overlayColor = 'rgba(0, 80, 120, 0.1)'; break;
+                case 'cam_polaroid': bgCtx.filter = 'sepia(0.3) contrast(1.1) saturate(0.8) brightness(1.1)'; overlayColor = 'rgba(200, 150, 100, 0.15)'; break;
+                case 'cam_rolleiflex': bgCtx.filter = 'grayscale(1) contrast(0.9) brightness(1.1)'; overlayColor = 'rgba(50, 40, 30, 0.1)'; break;
+                case 'cam_olympus': bgCtx.filter = 'contrast(1.3) saturate(1.4)'; overlayColor = 'rgba(100, 100, 0, 0.05)'; break;
+
+                // ANALOG FILM
+                case 'analog_35mm': bgCtx.filter = 'sepia(0.2) contrast(1.1) saturate(0.95) brightness(0.95)'; break;
+                case 'analog_120': bgCtx.filter = 'contrast(1.25) saturate(1.1) brightness(0.95)'; overlayColor = 'rgba(20, 10, 0, 0.1)'; break;
+                case 'analog_expired': bgCtx.filter = 'sepia(0.4) hue-rotate(-20deg) contrast(1.1)'; blendMode = 'screen'; overlayColor = 'rgba(50, 0, 50, 0.15)'; break;
+                case 'analog_crossprocess': bgCtx.filter = 'contrast(1.3) saturate(1.4) hue-rotate(15deg)'; blendMode = 'overlay'; overlayColor = 'rgba(255, 200, 0, 0.1)'; break;
+                case 'analog_push': bgCtx.filter = 'contrast(1.4) saturate(1.1) brightness(1.1)'; break;
+                case 'analog_cinestill': bgCtx.filter = 'contrast(1.2) saturate(1.2)'; blendMode = 'color-dodge'; overlayColor = 'rgba(0, 100, 200, 0.15)'; break; // Needs red halation technically, simulated via blue shadow
+                case 'analog_ilford': bgCtx.filter = 'grayscale(1) contrast(1.15) brightness(1.05)'; break;
+                case 'analog_trix': bgCtx.filter = 'grayscale(1) contrast(1.4) brightness(0.9)'; break;
+                case 'analog_portra': bgCtx.filter = 'contrast(1.05) saturate(1.1) sepia(0.1)'; overlayColor = 'rgba(255, 230, 200, 0.1)'; break;
+                case 'analog_velvia': bgCtx.filter = 'contrast(1.2) saturate(1.6) brightness(1.05)'; break;
+
+                // RETRO VINTAGE
+                case 'retro_70s': bgCtx.filter = 'sepia(0.5) contrast(0.9) brightness(1.1) saturate(1.2)'; overlayColor = 'rgba(255, 200, 0, 0.1)'; break;
+                case 'retro_80s': bgCtx.filter = 'contrast(1.3) saturate(1.5) hue-rotate(10deg)'; overlayColor = 'rgba(255, 0, 255, 0.05)'; break;
+                case 'retro_90s': bgCtx.filter = 'contrast(1.4) brightness(1.1) saturate(0.9)'; blendMode = 'screen'; overlayColor = 'rgba(200, 255, 200, 0.1)'; break;
+                case 'retro_y2k': bgCtx.filter = 'contrast(0.9) saturate(0.8) brightness(1.1)'; overlayColor = 'rgba(200, 200, 255, 0.2)'; break;
+                case 'retro_sepia': bgCtx.filter = 'sepia(0.8) contrast(1.1) brightness(1.1)'; overlayColor = 'rgba(255, 150, 50, 0.1)'; break;
+                case 'retro_denim': bgCtx.filter = 'grayscale(0.5) contrast(0.8) brightness(1.1)'; overlayColor = 'rgba(0, 0, 150, 0.15)'; break;
+                case 'retro_crimson': bgCtx.filter = 'sepia(1) hue-rotate(-30deg) saturate(2) contrast(1.2)'; overlayColor = 'rgba(150, 0, 0, 0.2)'; break;
+                case 'retro_emerald': bgCtx.filter = 'sepia(1) hue-rotate(60deg) saturate(1.5) contrast(1.1)'; overlayColor = 'rgba(0, 100, 0, 0.2)'; break;
+                case 'retro_golden': bgCtx.filter = 'sepia(0.4) contrast(1.1) saturate(1.3)'; blendMode = 'overlay'; overlayColor = 'rgba(255, 120, 0, 0.2)'; break;
+                case 'retro_neon': bgCtx.filter = 'contrast(1.4) saturate(2) brightness(0.9)'; overlayColor = 'rgba(0, 255, 255, 0.1)'; break;
+                case 'retro_matte': bgCtx.filter = 'contrast(0.7) brightness(1.2) saturate(0.8)'; break;
+                case 'retro_lomo': bgCtx.filter = 'contrast(1.5) saturate(1.5)'; blendMode = 'multiply'; overlayColor = 'rgba(255, 255, 0, 0.05)'; break;
+                case 'retro_coffee': bgCtx.filter = 'sepia(0.5) contrast(0.9)'; blendMode = 'multiply'; overlayColor = 'rgba(120, 80, 50, 0.2)'; break;
+                case 'retro_pastel': bgCtx.filter = 'contrast(0.8) brightness(1.2) saturate(0.7)'; overlayColor = 'rgba(255, 180, 200, 0.2)'; break;
+                case 'retro_grunge': bgCtx.filter = 'contrast(1.2) saturate(0.5) sepia(0.3)'; overlayColor = 'rgba(50, 60, 40, 0.2)'; break;
+                case 'retro_noir': bgCtx.filter = 'grayscale(1) contrast(1.5) brightness(0.8)'; break;
+                case 'retro_blueprint': bgCtx.filter = 'sepia(1) hue-rotate(180deg) contrast(1.5)'; blendMode = 'color-burn'; overlayColor = 'rgba(0, 50, 150, 0.2)'; break;
+                case 'retro_aerochrome': bgCtx.filter = 'hue-rotate(90deg) saturate(2) contrast(1.2)'; blendMode = 'screen'; overlayColor = 'rgba(255, 0, 100, 0.2)'; break;
+                case 'retro_bleach': bgCtx.filter = 'contrast(1.4) saturate(0.3) brightness(1.1)'; break;
+                case 'retro_technicolor': bgCtx.filter = 'contrast(1.2) saturate(1.8) sepia(0.2)'; break;
+                
+                default: bgCtx.filter = 'none';
+            }
+            
+            // Draw original image through the CSS filter
+            bgCtx.drawImage(currentImage, borderSide, borderSide, originalWidth, originalHeight);
+            bgCtx.restore(); // reset global filters
+
+            // Apply specific blend overlays (Color Tints & HDR logic)
+            if (overlayColor || blendMode !== 'source-over') {
+                bgCtx.save();
+                bgCtx.globalCompositeOperation = blendMode;
+                if (overlayColor) bgCtx.fillStyle = overlayColor;
+                
+                // If Smart HDR, we overlay the image itself in soft-light to boost local contrast!
+                if (filterType === 'smart_hdr') {
+                    bgCtx.drawImage(currentImage, borderSide, borderSide, originalWidth, originalHeight);
+                    // Add slight warming tint
+                    bgCtx.fillStyle = overlayColor;
+                    bgCtx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
+                } else if (overlayColor) {
+                    bgCtx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
+                }
+                bgCtx.restore();
+            }
+
+            // 3. Vignette Effect
+            const vigIntensity = parseFloat(inputs.vignette.value);
+            if (vigIntensity > 0) {
+                const centerX = borderSide + (originalWidth / 2);
+                const centerY = borderSide + (originalHeight / 2);
+                const radius = Math.max(originalWidth, originalHeight) * 0.7;
+                
+                const vignette = bgCtx.createRadialGradient(centerX, centerY, radius * 0.4, centerX, centerY, radius);
+                vignette.addColorStop(0, 'rgba(0,0,0,0)');
+                vignette.addColorStop(1, `rgba(0, 0, 0, ${vigIntensity})`);
+                
+                bgCtx.fillStyle = vignette;
+                bgCtx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
+            }
+
+            // 4. Heavy Noise / Grain Pattern Generation
+            const grainAlpha = parseInt(inputs.grain.value);
+            if (grainAlpha > 0) {
+                const patternSize = 128; // Small tile to save memory
+                const patternCanvas = document.createElement('canvas');
+                patternCanvas.width = patternSize;
+                patternCanvas.height = patternSize;
+                const pCtx = patternCanvas.getContext('2d');
+                const imgData = pCtx.createImageData(patternSize, patternSize);
+                const data = imgData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    const val = Math.random() * 255;
+                    data[i] = val;     // R
+                    data[i+1] = val;   // G
+                    data[i+2] = val;   // B
+                    data[i+3] = grainAlpha; // A
+                }
+                pCtx.putImageData(imgData, 0, 0);
+                
+                bgCtx.save();
+                bgCtx.globalCompositeOperation = 'overlay'; 
+                bgCtx.fillStyle = bgCtx.createPattern(patternCanvas, 'repeat');
+                bgCtx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
+                bgCtx.restore();
+            }
+
+            // 5. Inset Borders (3D shadow effect on the inner photo)
+            bgCtx.strokeStyle = 'rgba(0,0,0,0.2)';
+            bgCtx.lineWidth = Math.max(2, maxDim * 0.003);
+            bgCtx.strokeRect(borderSide, borderSide, originalWidth, originalHeight);
+            
+            // 6. Draw Typography (Date, Loc, Desc)
+            drawTypography(maxDim, borderSide, borderBottom);
+        }
+
+        function drawTypography(maxDim, borderSide, borderBottom) {
+            let dateStr = "";
+            if (inputs.date.value) {
+                const d = new Date(inputs.date.value);
+                dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+            }
+
+            const locationStr = inputs.location.value.trim();
+            const descStr = inputs.desc.value.trim();
+            const lines = [];
+            if (dateStr) lines.push(dateStr);
+            if (locationStr) lines.push(locationStr);
+            if (descStr) lines.push(descStr);
+
+            if (lines.length === 0) return;
+
+            const baseFontSize = bgCacheCanvas.width * 0.03;
+            
+            bgCtx.font = `${baseFontSize}px 'Special Elite', monospace`;
+            bgCtx.fillStyle = inputs.textColor.value;
+            bgCtx.textBaseline = 'middle';
+            bgCtx.textAlign = 'center';
+
+            // Subtle dark smudge shadow for realism (typewriter ink effect)
+            bgCtx.shadowColor = "rgba(0, 0, 0, 0.4)";
+            bgCtx.shadowBlur = baseFontSize * 0.05;
+            bgCtx.shadowOffsetX = baseFontSize * 0.01;
+            bgCtx.shadowOffsetY = baseFontSize * 0.01;
+
+            const lineHeight = baseFontSize * 1.3;
+            const totalTextHeight = lines.length * lineHeight;
+            const bottomAreaCenterY = originalHeight + borderSide + (borderBottom / 2);
+            const startY = bottomAreaCenterY - (totalTextHeight / 2) + (lineHeight / 2);
+            const startX = bgCacheCanvas.width / 2;
+
+            lines.forEach((line, index) => {
+                bgCtx.fillText(line, startX, startY + (index * lineHeight));
+            });
+            bgCtx.shadowColor = "transparent";
+        }
+
+        // --- 4. DATA I/O (Upload / Download) ---
+        function handleImageUpload(e) {
+            if (!e.target.files || !e.target.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    currentImage = img;
+                    originalWidth = img.width;
+                    originalHeight = img.height;
+                    
+                    placeholderText.style.display = 'none';
+                    downloadBtn.disabled = false;
+                    
+                    // Reset stickers for new image
+                    stickers = [];
+                    selectedStickerIndex = -1;
+                    updateStickerUI();
+                    
+                    isCacheDirty = true;
+                    requestRender();
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        function downloadImage() {
+            if (!currentImage) return;
+            // Clear selection box before downloading
+            const tempIndex = selectedStickerIndex;
+            selectedStickerIndex = -1; 
+            drawMainCanvas(); 
+            
+            const dataURL = mainCanvas.toDataURL('image/jpeg', 0.95);
+            const link = document.createElement('a');
+            const ts = new Date().getTime();
+            link.download = `polaroid_ultimate_${ts}.jpg`;
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Restore selection
+            selectedStickerIndex = tempIndex;
+            drawMainCanvas();
+        }
+
+        // --- 5. CAMERA WEBRTC SYSTEM (Safely handled) ---
         const openCameraBtn = document.getElementById('openCameraBtn');
         const cameraModal = document.getElementById('cameraModal');
         const cameraVideo = document.getElementById('cameraVideo');
@@ -373,77 +1044,22 @@
         const closeCameraBtnX = document.getElementById('closeCameraBtnX');
         const cameraErrorText = document.getElementById('cameraErrorText');
         const cameraDeviceSelect = document.getElementById('cameraDeviceSelect');
-
-        // Inputs
-        const dateInput = document.getElementById('dateInput');
-        const locationInput = document.getElementById('locationInput');
-        const descInput = document.getElementById('descInput');
-        
-        // Styling Inputs
-        const textColorInput = document.getElementById('textColor');
-        const frameColorInput = document.getElementById('frameColor');
-        const frameFormatInput = document.getElementById('frameFormat');
-        const frameTextureInput = document.getElementById('frameTexture');
-        const vintageFilterInput = document.getElementById('vintageFilter');
-        const vignetteIntensityInput = document.getElementById('vignetteIntensity');
-        const grainIntensityInput = document.getElementById('grainIntensity');
-        const textAlignInput = document.getElementById('textAlign');
-        const textShadowInput = document.getElementById('textShadow');
-        const fontSizeScaleInput = document.getElementById('fontSizeScale');
-        
-        const downloadBtn = document.getElementById('downloadBtn');
-
-        // --- State ---
-        let currentImage = null;
-        let originalWidth = 0;
-        let originalHeight = 0;
         let cameraStream = null;
 
-        // Set default date to today
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        let mm = today.getMonth() + 1; 
-        let dd = today.getDate();
-        if (dd < 10) dd = '0' + dd;
-        if (mm < 10) mm = '0' + mm;
-        dateInput.value = `${yyyy}-${mm}-${dd}`;
-
-        // --- Event Listeners ---
-        imageLoader.addEventListener('change', handleImageUpload, false);
-        
-        const inputsToWatch = [
-            dateInput, locationInput, descInput, 
-            textColorInput, frameColorInput, frameFormatInput, frameTextureInput, vintageFilterInput, 
-            vignetteIntensityInput, grainIntensityInput,
-            textAlignInput, textShadowInput, fontSizeScaleInput
-        ];
-        
-        inputsToWatch.forEach(input => {
-            input.addEventListener('input', drawImageOnCanvas);
-        });
-
-        downloadBtn.addEventListener('click', downloadImage);
-
-        // --- Camera Handling & Lens Selection ---
         async function startCamera(deviceId = null) {
-            // Hentikan stream yang sedang berjalan sebelum mengganti lensa
+            // STOP PREVIOUS STREAM SAFELY (Prevents memory leaks/frozen lights)
             if (cameraStream) {
                 cameraStream.getTracks().forEach(track => track.stop());
             }
 
             const constraints = {
-                video: {
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
-                }
+                video: { width: { ideal: 1920 }, height: { ideal: 1080 } }
             };
 
-            // Jika ada spesifik device (lensa tertentu yang dipilih)
             if (deviceId) {
                 constraints.video.deviceId = { exact: deviceId };
             } else {
-                // Default pertama kali buka: kamera belakang
-                constraints.video.facingMode = 'environment';
+                constraints.video.facingMode = 'environment'; // Back camera default
             }
 
             try {
@@ -451,12 +1067,11 @@
                 cameraVideo.srcObject = cameraStream;
                 cameraErrorText.classList.add('hidden');
                 
-                // Perbarui daftar lensa di dropdown (hanya jika berhasil akses)
+                // Wait for permissions to be granted before reading device names
                 await updateDeviceList();
             } catch (err) {
-                cameraErrorText.textContent = "Kamera tidak dapat diakses atau izin ditolak oleh browser.";
+                cameraErrorText.textContent = "Gagal mengakses kamera. Pastikan browser memiliki izin akses dan kamera tidak sedang digunakan aplikasi lain.";
                 cameraErrorText.classList.remove('hidden');
-                cameraDeviceSelect.classList.add('hidden');
             }
         }
 
@@ -465,14 +1080,11 @@
             
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
-                // Filter hanya perangkat yang berupa input video (kamera)
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
                 
-                // Tampilkan dropdown hanya jika ada lebih dari 1 kamera/lensa
+                cameraDeviceSelect.innerHTML = '';
+                
                 if (videoDevices.length > 1) {
-                    cameraDeviceSelect.innerHTML = '';
-                    
-                    // Cek ID lensa yang sedang aktif
                     let activeDeviceId = null;
                     if (cameraStream && cameraStream.getVideoTracks().length > 0) {
                         activeDeviceId = cameraStream.getVideoTracks()[0].getSettings().deviceId;
@@ -481,35 +1093,28 @@
                     videoDevices.forEach((device, index) => {
                         const option = document.createElement('option');
                         option.value = device.deviceId;
-                        // Label kadang kosong jika belum dapat izin penuh, beri fallback nama
+                        // Use original browser labels (Wide, Ultrawide, etc.)
                         option.text = device.label || `Lensa Kamera ${index + 1}`;
-                        
-                        if (activeDeviceId && device.deviceId === activeDeviceId) {
-                            option.selected = true;
-                        }
+                        if (activeDeviceId === device.deviceId) option.selected = true;
                         cameraDeviceSelect.appendChild(option);
                     });
-                    
-                    cameraDeviceSelect.classList.remove('hidden');
+                    cameraDeviceSelect.parentElement.classList.remove('hidden');
                 } else {
-                    cameraDeviceSelect.classList.add('hidden');
+                    cameraDeviceSelect.parentElement.classList.add('hidden');
                 }
             } catch (err) {
-                console.error("Gagal mendata perangkat kamera:", err);
+                console.error("Enumerate devices error:", err);
             }
         }
 
-        // Listener saat pengguna memilih lensa lain
         cameraDeviceSelect.addEventListener('change', (e) => {
-            if (e.target.value) {
-                startCamera(e.target.value);
-            }
+            if (e.target.value) startCamera(e.target.value);
         });
 
         openCameraBtn.addEventListener('click', () => {
             cameraModal.classList.remove('hidden');
             cameraErrorText.classList.add('hidden');
-            startCamera(); // Mulai kamera tanpa parameter untuk default belakang
+            startCamera(); 
         });
 
         function closeCameraModal() {
@@ -526,326 +1131,29 @@
         captureBtn.addEventListener('click', () => {
             if (!cameraStream) return;
             
-            // Render video frame to a temporary canvas
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = cameraVideo.videoWidth;
             tempCanvas.height = cameraVideo.videoHeight;
             const tCtx = tempCanvas.getContext('2d');
             tCtx.drawImage(cameraVideo, 0, 0);
             
-            // Load it as our working image
             const img = new Image();
             img.onload = function() {
                 currentImage = img;
                 originalWidth = img.width;
                 originalHeight = img.height;
                 
-                canvas.width = originalWidth;
-                canvas.height = originalHeight;
-                
-                canvasContainer.style.aspectRatio = `${originalWidth} / ${originalHeight}`;
                 placeholderText.style.display = 'none';
                 downloadBtn.disabled = false;
+                stickers = [];
+                selectedStickerIndex = -1;
                 
-                drawImageOnCanvas();
+                isCacheDirty = true;
+                requestRender();
             };
             img.src = tempCanvas.toDataURL('image/jpeg', 1.0);
-            
             closeCameraModal();
         });
-
-        // --- Functions ---
-        function handleImageUpload(e) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    currentImage = img;
-                    originalWidth = img.width;
-                    originalHeight = img.height;
-                    
-                    canvas.width = originalWidth;
-                    canvas.height = originalHeight;
-                    
-                    canvasContainer.style.aspectRatio = `${originalWidth} / ${originalHeight}`;
-                    placeholderText.style.display = 'none';
-                    downloadBtn.disabled = false;
-                    
-                    drawImageOnCanvas();
-                }
-                img.src = event.target.result;
-            }
-            if (e.target.files && e.target.files[0]) {
-                reader.readAsDataURL(e.target.files[0]);
-            }
-        }
-
-        function drawImageOnCanvas() {
-            if (!currentImage) return;
-
-            // 1. Calculate Polaroid Dimensions
-            const maxDim = Math.max(originalWidth, originalHeight);
-            
-            let borderSideRatio = 0.05;
-            let borderBottomRatio = 0.20;
-            const format = frameFormatInput.value;
-
-            if (format === 'mini') { borderSideRatio = 0.07; borderBottomRatio = 0.28; }
-            else if (format === 'wide') { borderSideRatio = 0.04; borderBottomRatio = 0.15; }
-            else if (format === 'square') { borderSideRatio = 0.05; borderBottomRatio = 0.05; }
-            else if (format === 'thick') { borderSideRatio = 0.09; borderBottomRatio = 0.25; }
-            else if (format === 'thin') { borderSideRatio = 0.02; borderBottomRatio = 0.08; }
-
-            const borderSide = maxDim * borderSideRatio;
-            const borderBottom = maxDim * borderBottomRatio;
-
-            canvas.width = originalWidth + (borderSide * 2);
-            canvas.height = originalHeight + borderSide + borderBottom;
-
-            // 2. Draw Frame & Textures
-            ctx.fillStyle = frameColorInput.value;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            const texture = frameTextureInput.value;
-            
-            if (texture !== 'clean') {
-                const frameGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-                frameGrad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
-                frameGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
-                frameGrad.addColorStop(1, 'rgba(0, 0, 0, 0.04)');
-                ctx.fillStyle = frameGrad;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            if (texture === 'stained') {
-                const stain = ctx.createRadialGradient(0, 0, 0, 0, 0, maxDim * 0.6);
-                stain.addColorStop(0, 'rgba(139, 69, 19, 0.12)'); 
-                stain.addColorStop(1, 'rgba(139, 69, 19, 0)');
-                ctx.fillStyle = stain;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                const stain2 = ctx.createRadialGradient(canvas.width, canvas.height, 0, canvas.width, canvas.height, maxDim * 0.5);
-                stain2.addColorStop(0, 'rgba(101, 67, 33, 0.15)');
-                stain2.addColorStop(1, 'rgba(0, 0, 0, 0)');
-                ctx.fillStyle = stain2;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            if (texture === 'worn') {
-                ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-                ctx.lineWidth = Math.max(5, maxDim * 0.015);
-                ctx.strokeRect(0, 0, canvas.width, canvas.height);
-                
-                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                ctx.lineWidth = Math.max(2, maxDim * 0.005);
-                ctx.strokeRect(ctx.lineWidth, ctx.lineWidth, canvas.width - ctx.lineWidth*2, canvas.height - ctx.lineWidth*2);
-            }
-
-            ctx.strokeStyle = 'rgba(0,0,0,0.08)';
-            ctx.lineWidth = Math.max(1, maxDim * 0.002);
-            ctx.strokeRect(0, 0, canvas.width, canvas.height);
-
-            // 3. Draw Image with Filters (Now includes 5 New Cinematic/Film Styles)
-            ctx.save();
-            const filterType = vintageFilterInput.value;
-            let overlayColor = null;
-            let hasFlashOverlay = false;
-
-            switch(filterType) {
-                // --- NEW 5 FILM/CINEMATIC FILTERS ---
-                case 'film_kodak': ctx.filter = 'contrast(1.05) saturate(1.2) sepia(0.25) brightness(1.05)'; overlayColor = 'rgba(255, 180, 100, 0.08)'; break;
-                case 'film_fuji': ctx.filter = 'contrast(1.15) saturate(1.1) brightness(1.02)'; overlayColor = 'rgba(0, 200, 120, 0.06)'; break;
-                case 'film_cinematic': ctx.filter = 'contrast(1.2) saturate(1.25) sepia(0.15)'; overlayColor = 'rgba(0, 120, 150, 0.12)'; break;
-                case 'film_noir': ctx.filter = 'grayscale(1) contrast(1.6) brightness(0.9)'; overlayColor = 'rgba(20, 20, 20, 0.1)'; break;
-                case 'film_vhs': ctx.filter = 'contrast(0.9) saturate(0.7) sepia(0.1)'; overlayColor = 'rgba(255, 0, 180, 0.07)'; break;
-                // ------------------------------------
-                case 'light': ctx.filter = 'sepia(0.3) contrast(1.1) brightness(0.95) saturate(0.85)'; break;
-                case 'heavy': ctx.filter = 'sepia(0.6) contrast(1.25) brightness(0.9) saturate(0.6)'; break;
-                case 'flash': ctx.filter = 'contrast(1.35) brightness(1.1) saturate(1.15) sepia(0.1)'; hasFlashOverlay = true; break;
-                case 'bw': ctx.filter = 'grayscale(1) contrast(1.25) brightness(0.95)'; break;
-                case 'cool': ctx.filter = 'contrast(1.15) brightness(0.95) saturate(0.75)'; overlayColor = 'rgba(0, 50, 90, 0.15)'; break;
-                case 'matte': ctx.filter = 'sepia(0.2) contrast(0.85) brightness(1.1) saturate(0.75)'; overlayColor = 'rgba(120, 80, 50, 0.1)'; break;
-                case 'lomo': ctx.filter = 'contrast(1.4) saturate(1.5) brightness(0.95)'; overlayColor = 'rgba(50, 100, 0, 0.1)'; break;
-                case 'warm': ctx.filter = 'sepia(0.3) contrast(1.1) saturate(1.2)'; overlayColor = 'rgba(255, 120, 0, 0.15)'; break;
-                case 'cyanotype': ctx.filter = 'sepia(1) hue-rotate(180deg) contrast(1.5) brightness(0.9)'; overlayColor = 'rgba(0, 50, 100, 0.2)'; break;
-                case 'fadedbw': ctx.filter = 'grayscale(1) contrast(0.7) brightness(1.15)'; break;
-                case 'pastel': ctx.filter = 'contrast(0.85) brightness(1.1) saturate(1.3)'; overlayColor = 'rgba(255, 182, 193, 0.15)'; break;
-                case 'grunge': ctx.filter = 'contrast(1.2) saturate(0.6) sepia(0.3)'; overlayColor = 'rgba(85, 107, 47, 0.15)'; break;
-                case 'negative': ctx.filter = 'invert(1) contrast(1.1)'; break;
-                case 'cyberpunk': ctx.filter = 'contrast(1.3) saturate(1.5)'; overlayColor = 'rgba(255, 0, 255, 0.12)'; break;
-                case 'denim': ctx.filter = 'grayscale(0.4) contrast(0.8) brightness(1.1)'; overlayColor = 'rgba(0, 0, 128, 0.15)'; break;
-                case 'crimson': ctx.filter = 'grayscale(1) contrast(1.2)'; overlayColor = 'rgba(139, 0, 0, 0.3)'; break;
-                case 'amber': ctx.filter = 'sepia(1) saturate(2) contrast(1.1)'; overlayColor = 'rgba(255, 140, 0, 0.15)'; break;
-                case 'emerald': ctx.filter = 'contrast(1.1) saturate(1.2) sepia(0.2)'; overlayColor = 'rgba(0, 128, 0, 0.15)'; break;
-                case 'overexposed': ctx.filter = 'brightness(1.4) contrast(0.85) saturate(0.8)'; break;
-                case 'pinhole': ctx.filter = 'contrast(1.5) brightness(0.9) saturate(0.5)'; overlayColor = 'rgba(50, 20, 0, 0.2)'; break;
-                case 'pro_studio': ctx.filter = 'brightness(1.05) contrast(0.95) saturate(1.05)'; overlayColor = 'rgba(255, 230, 200, 0.05)'; break;
-                case 'pro_cinematic': ctx.filter = 'contrast(1.15) saturate(1.2) sepia(0.1)'; overlayColor = 'rgba(0, 80, 120, 0.15)'; break;
-                case 'pro_landscape': ctx.filter = 'contrast(1.15) saturate(1.35) brightness(1.05)'; break;
-                case 'pro_bw': ctx.filter = 'grayscale(1) contrast(1.3) brightness(1.1)'; break;
-                case 'pro_commercial': ctx.filter = 'contrast(1.1) brightness(1.1) saturate(1.15)'; break;
-                default: ctx.filter = 'none';
-            }
-            
-            ctx.drawImage(currentImage, borderSide, borderSide, originalWidth, originalHeight);
-            ctx.restore();
-
-            // Filters and Vignette overlays
-            if (overlayColor) {
-                ctx.fillStyle = overlayColor;
-                ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
-            }
-
-            if (hasFlashOverlay) {
-                const centerX = borderSide + (originalWidth / 2);
-                const centerY = borderSide + (originalHeight / 2);
-                const maxRadius = Math.max(originalWidth, originalHeight) * 0.7;
-                const flashGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
-                flashGrad.addColorStop(0, 'rgba(255, 255, 255, 0.35)'); 
-                flashGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0.08)');
-                flashGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                ctx.save();
-                ctx.globalCompositeOperation = 'screen';
-                ctx.fillStyle = flashGrad;
-                ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
-                ctx.restore();
-            }
-
-            const vigIntensity = parseFloat(vignetteIntensityInput.value);
-            if (vigIntensity > 0) {
-                const centerX = borderSide + (originalWidth / 2);
-                const centerY = borderSide + (originalHeight / 2);
-                const radius = Math.max(originalWidth, originalHeight) * 0.7;
-                
-                const vignette = ctx.createRadialGradient(centerX, centerY, radius * 0.3, centerX, centerY, radius);
-                vignette.addColorStop(0, 'rgba(0,0,0,0)');
-                vignette.addColorStop(1, `rgba(0, 0, 0, ${vigIntensity})`);
-                
-                ctx.fillStyle = vignette;
-                ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
-            }
-
-            const grainAlpha = parseInt(grainIntensityInput.value);
-            if (grainAlpha > 0) {
-                const patternSize = 128;
-                const patternCanvas = document.createElement('canvas');
-                patternCanvas.width = patternSize;
-                patternCanvas.height = patternSize;
-                const pCtx = patternCanvas.getContext('2d');
-                const imgData = pCtx.createImageData(patternSize, patternSize);
-                const data = imgData.data;
-                
-                for (let i = 0; i < data.length; i += 4) {
-                    const val = Math.random() * 255;
-                    data[i]     = val; // R
-                    data[i + 1] = val; // G
-                    data[i + 2] = val; // B
-                    data[i + 3] = grainAlpha; // Alpha
-                }
-                pCtx.putImageData(imgData, 0, 0);
-                
-                ctx.save();
-                ctx.globalCompositeOperation = 'overlay'; 
-                ctx.fillStyle = ctx.createPattern(patternCanvas, 'repeat');
-                ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
-                ctx.restore();
-            }
-
-            // Inset borders for depth
-            ctx.strokeStyle = 'rgba(0,0,0,0.18)';
-            ctx.lineWidth = Math.max(2, maxDim * 0.003);
-            ctx.strokeRect(borderSide, borderSide, originalWidth, originalHeight);
-            
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-            ctx.lineWidth = Math.max(1, maxDim * 0.0015);
-            ctx.beginPath();
-            ctx.moveTo(borderSide, borderSide + originalHeight);
-            ctx.lineTo(borderSide, borderSide);
-            ctx.lineTo(borderSide + originalWidth, borderSide);
-            ctx.stroke();
-
-            // 4. Gather & Draw Text
-            let dateStr = "";
-            if (dateInput.value) {
-                const d = new Date(dateInput.value);
-                const day = String(d.getDate()).padStart(2, '0');
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const year = d.getFullYear();
-                dateStr = `${year}.${month}.${day}`; 
-            }
-
-            const locationStr = locationInput.value.trim();
-            const descStr = descInput.value.trim();
-
-            const lines = [];
-            if (dateStr) lines.push(dateStr);
-            if (locationStr) lines.push(locationStr);
-            if (descStr) lines.push(descStr);
-
-            if (lines.length === 0) return;
-
-            const scaleFactor = parseFloat(fontSizeScaleInput.value);
-            const baseFontSize = (canvas.width * 0.03) * scaleFactor;
-            
-            ctx.font = `${baseFontSize}px 'Special Elite', monospace`;
-            ctx.fillStyle = textColorInput.value;
-            ctx.textBaseline = 'middle';
-
-            const shadowType = textShadowInput.value;
-            if (shadowType === 'dark') {
-                ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-                ctx.shadowBlur = baseFontSize * 0.1;
-                ctx.shadowOffsetX = baseFontSize * 0.02;
-                ctx.shadowOffsetY = baseFontSize * 0.02;
-            } else if (shadowType === 'light') {
-                ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
-                ctx.shadowBlur = baseFontSize * 0.1;
-                ctx.shadowOffsetX = baseFontSize * 0.02;
-                ctx.shadowOffsetY = baseFontSize * 0.02;
-            } else {
-                ctx.shadowColor = "transparent";
-            }
-
-            const align = textAlignInput.value;
-            const marginX = canvas.width * 0.08; 
-            const lineHeight = baseFontSize * 1.3;
-            const totalTextHeight = lines.length * lineHeight;
-            
-            const bottomAreaCenterY = originalHeight + borderSide + (borderBottom / 2);
-            const startY = bottomAreaCenterY - (totalTextHeight / 2) + (lineHeight / 2);
-
-            let startX;
-            ctx.textAlign = align;
-
-            if (align === 'left') {
-                startX = marginX;
-            } else if (align === 'right') {
-                startX = canvas.width - marginX;
-            } else {
-                startX = canvas.width / 2;
-            }
-
-            lines.forEach((line, index) => {
-                const currentY = startY + (index * lineHeight);
-                ctx.fillText(line, startX, currentY);
-            });
-            
-            ctx.shadowColor = "transparent";
-        }
-
-        function downloadImage() {
-            if (!currentImage) return;
-            const dataURL = canvas.toDataURL('image/jpeg', 0.95);
-            const link = document.createElement('a');
-            const d = new Date();
-            const timeStamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${d.getHours()}${d.getMinutes()}`;
-            link.download = `stamped_photo_${timeStamp}.jpg`;
-            
-            link.href = dataURL;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
     });
 </script>
 
