@@ -224,6 +224,16 @@
                 <hr class="my-4 border-gray-200">
                 <h3 class="text-sm font-bold text-gray-700 mb-3">Teks & Bingkai</h3>
                 
+                <!-- NEW FEATURE: Text Size Slider -->
+                <div class="input-group mb-4">
+                    <label for="textSize">Ukuran Teks Keterangan</label>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-gray-400">A-</span>
+                        <input type="range" id="textSize" min="0.5" max="3" step="0.1" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <span class="text-sm font-bold text-gray-600">A+</span>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div class="input-group">
                         <label for="textColor">Warna Teks</label>
@@ -448,6 +458,7 @@
             date: document.getElementById('dateInput'),
             location: document.getElementById('locationInput'),
             desc: document.getElementById('descInput'),
+            textSize: document.getElementById('textSize'), // NEW: Text Size Input
             textColor: document.getElementById('textColor'),
             frameColor: document.getElementById('frameColor'),
             frameFormat: document.getElementById('frameFormat'),
@@ -487,10 +498,12 @@
         // If image or filters change, we MUST rebuild the background cache.
         const cacheInvalidatingInputs = Object.values(inputs);
         cacheInvalidatingInputs.forEach(input => {
-            input.addEventListener('input', () => {
-                isCacheDirty = true;
-                requestRender();
-            });
+            if(input) {
+                input.addEventListener('input', () => {
+                    isCacheDirty = true;
+                    requestRender();
+                });
+            }
         });
 
         imageLoader.addEventListener('change', handleImageUpload);
@@ -962,7 +975,9 @@
 
             if (lines.length === 0) return;
 
-            const baseFontSize = bgCacheCanvas.width * 0.03;
+            // FITUR BARU: Mengambil nilai ukuran (multiplier) dari slider teks
+            const sizeMultiplier = parseFloat(inputs.textSize.value) || 1;
+            const baseFontSize = (bgCacheCanvas.width * 0.03) * sizeMultiplier;
             
             bgCtx.font = `${baseFontSize}px 'Special Elite', monospace`;
             bgCtx.fillStyle = inputs.textColor.value;
