@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Photo Stamper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .typewriter-font {
+            font-family: 'Special Elite', cursive;
+        }
+
+        /* Container for the canvas to maintain aspect ratio and fit screen */
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #e5e7eb;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Default aspect ratio, will be updated via JS */
+            aspect-ratio: 1 / 1; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* The actual canvas element */
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .controls-panel {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+        
+        .custom-file-upload {
+            border: 2px dashed #9ca3af;
+            display: inline-block;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            color: #4b5563;
+            transition: all 0.3s;
+            text-align: center;
+            width: 100%;
+        }
+
+        .custom-file-upload:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="date"],
+        .input-group input[type="color"],
+        .input-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+        
+        .input-group input[type="color"] {
+            padding: 0;
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .btn {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
+        }
+        
+        .btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #10b981;
+        }
+
+        .btn-secondary:hover {
+            background-color: #059669;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+<div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Controls Section -->
+    <div class="lg:col-span-1 flex flex-col gap-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2 typewriter-font">Retro Stamper</h1>
+        <p class="text-sm text-gray-600 mb-4">Turn your high-resolution photos into retro Polaroid-style prints with typewriter text on the frame.</p>
+        
+        <div class="controls-panel">
+            <!-- File Upload -->
+            <div class="mb-6">
+                <label class="custom-file-upload">
+                    <input type="file" id="imageLoader" accept="image/*" />
+                    <svg class="w-8 h-8 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span>Click to Upload High-Res Photo</span>
+                </label>
+            </div>
+
+            <!-- Content Inputs -->
+            <div class="input-group">
+                <label for="dateInput">Date</label>
+                <input type="date" id="dateInput" value="">
+            </div>
+            <div class="input-group">
+                <label for="locationInput">Location</label>
+                <input type="text" id="locationInput" placeholder="e.g., Jakarta, Indonesia">
+            </div>
+            <div class="input-group">
+                <label for="descInput">Description/Note</label>
+                <input type="text" id="descInput" placeholder="A beautiful day...">
+            </div>
+
+            <hr class="my-6 border-gray-200">
+
+            <!-- Styling Controls -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="input-group">
+                    <label for="textColor">Text Color</label>
+                    <input type="color" id="textColor" value="#111827">
+                </div>
+                <div class="input-group">
+                    <label for="frameColor">Frame Color</label>
+                    <input type="color" id="frameColor" value="#F4F0E6">
+                </div>
+                <div class="input-group col-span-2">
+                    <label for="vintageFilter">Photo Filter (Retro Effect)</label>
+                    <select id="vintageFilter">
+                        <option value="none">None (Original Photo)</option>
+                        <option value="light" selected>Light Retro (Faded & Warm)</option>
+                        <option value="heavy">Heavy Vintage (High Contrast Sepia)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- New Camera Effects -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="input-group">
+                    <label for="vignetteIntensity">Vignette (Dark Edges)</label>
+                    <input type="range" id="vignetteIntensity" min="0" max="0.8" step="0.1" value="0.4" class="w-full">
+                </div>
+                <div class="input-group">
+                    <label for="grainIntensity">Film Grain (Noise)</label>
+                    <input type="range" id="grainIntensity" min="0" max="60" step="5" value="25" class="w-full">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="input-group">
+                    <label for="textAlign">Text Alignment</label>
+                    <select id="textAlign">
+                        <option value="left">Left</option>
+                        <option value="center" selected>Center</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="textShadow">Text Effect</label>
+                    <select id="textShadow">
+                        <option value="none" selected>None</option>
+                        <option value="light">Light Glow</option>
+                        <option value="dark">Dark Shadow</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                 <label for="fontSizeScale">Font Size Scale</label>
+                 <input type="range" id="fontSizeScale" min="0.5" max="3" step="0.1" value="1" class="w-full">
+            </div>
+
+            <div class="mt-6">
+                <button id="downloadBtn" class="btn btn-secondary" disabled>
+                    Download Full-Res Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="lg:col-span-2 flex flex-col">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Preview</h2>
+        <div id="canvas-container">
+            <!-- Canvas will be injected here by JS -->
+            <p id="placeholder-text" class="text-gray-500 text-center absolute w-full z-10 pointer-events-none">Upload an image to start editing</p>
+            <canvas id="imageCanvas"></canvas>
+        </div>
+        <p class="text-xs text-gray-500 mt-2 text-center">Preview is scaled down. Downloaded image retains original resolution.</p>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Elements ---
+        const imageLoader = document.getElementById('imageLoader');
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvas-container');
+        const placeholderText = document.getElementById('placeholder-text');
+        
+        // Inputs
+        const dateInput = document.getElementById('dateInput');
+        const locationInput = document.getElementById('locationInput');
+        const descInput = document.getElementById('descInput');
+        
+        // Styling Inputs
+        const textColorInput = document.getElementById('textColor');
+        const frameColorInput = document.getElementById('frameColor');
+        const vintageFilterInput = document.getElementById('vintageFilter');
+        const vignetteIntensityInput = document.getElementById('vignetteIntensity');
+        const grainIntensityInput = document.getElementById('grainIntensity');
+        const textAlignInput = document.getElementById('textAlign');
+        const textShadowInput = document.getElementById('textShadow');
+        const fontSizeScaleInput = document.getElementById('fontSizeScale');
+        
+        // Buttons
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // --- State ---
+        let currentImage = null;
+        let originalWidth = 0;
+        let originalHeight = 0;
+
+        // Set default date to today
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1; // Months start at 0!
+        let dd = today.getDate();
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+        // Event Listeners ---
+        imageLoader.addEventListener('change', handleImageUpload, false);
+        
+        // Redraw when any input changes
+        const inputsToWatch = [
+            dateInput, locationInput, descInput, 
+            textColorInput, frameColorInput, vintageFilterInput, 
+            vignetteIntensityInput, grainIntensityInput,
+            textAlignInput, textShadowInput, fontSizeScaleInput
+        ];
+        
+        inputsToWatch.forEach(input => {
+            input.addEventListener('input', drawImageOnCanvas);
+        });
+
+        downloadBtn.addEventListener('click', downloadImage);
+
+        // Handle window resize to adjust canvas preview size if needed
+        window.addEventListener('resize', () => {
+            if (currentImage) {
+                 // We don't necessarily need to redraw on resize because CSS handles scaling,
+                 // but if we were doing complex manual layout in JS we might.
+                 // Currently, CSS object-fit: contain handles the preview rendering nicely.
+            }
+        });
+
+        // --- Functions ---
+        
+        function handleImageUpload(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    currentImage = img;
+                    originalWidth = img.width;
+                    originalHeight = img.height;
+                    
+                    // Set canvas dimensions to ACTUAL image dimensions for high-res output
+                    canvas.width = originalWidth;
+                    canvas.height = originalHeight;
+                    
+                    // Adjust container aspect ratio to match image so it fits nicely
+                    canvasContainer.style.aspectRatio = `${originalWidth} / ${originalHeight}`;
+                    placeholderText.style.display = 'none';
+                    downloadBtn.disabled = false;
+                    
+                    drawImageOnCanvas();
+                }
+                img.src = event.target.result;
+            }
+            if (e.target.files && e.target.files[0]) {
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        }
+
+        function drawImageOnCanvas() {
+            if (!currentImage) return;
+
+            // 1. Calculate Polaroid Dimensions
+            // Frame padding is based on the max dimension of the image to maintain proportions
+            const maxDim = Math.max(originalWidth, originalHeight);
+            const borderSide = maxDim * 0.05; // 5% border on sides and top
+            const borderBottom = maxDim * 0.20; // 20% border on bottom for text
+
+            // Set canvas size to include the frame
+            canvas.width = originalWidth + (borderSide * 2);
+            canvas.height = originalHeight + borderSide + borderBottom;
+
+            // 2. Draw Polaroid Frame (Background)
+            ctx.fillStyle = frameColorInput.value;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add subtle paper texture/lighting to the frame
+            const frameGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            frameGrad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+            frameGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+            frameGrad.addColorStop(1, 'rgba(0, 0, 0, 0.04)');
+            ctx.fillStyle = frameGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Subtle outer border for physical depth
+            ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+            ctx.lineWidth = Math.max(1, maxDim * 0.002);
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+            // 3. Draw Base Image with Optional Vintage Filter
+            ctx.save();
+            const filterType = vintageFilterInput.value;
+            if (filterType === 'light') {
+                ctx.filter = 'sepia(0.3) contrast(1.1) brightness(0.95) saturate(0.85)';
+            } else if (filterType === 'heavy') {
+                ctx.filter = 'sepia(0.6) contrast(1.25) brightness(0.9) saturate(0.6)';
+            } else {
+                ctx.filter = 'none';
+            }
+            
+            ctx.drawImage(currentImage, borderSide, borderSide, originalWidth, originalHeight);
+            ctx.restore();
+
+            const vigIntensity = parseFloat(vignetteIntensityInput.value);
+            if (vigIntensity > 0) {
+                const centerX = borderSide + (originalWidth / 2);
+                const centerY = borderSide + (originalHeight / 2);
+                const radius = Math.max(originalWidth, originalHeight) * 0.7;
+                
+                const vignette = ctx.createRadialGradient(
+                    centerX, centerY, radius * 0.3, 
+                    centerX, centerY, radius
+                );
+                vignette.addColorStop(0, 'rgba(0,0,0,0)');
+                vignette.addColorStop(1, `rgba(0, 0, 0, ${vigIntensity})`);
+                
+                ctx.fillStyle = vignette;
+                ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
+            }
+
+            const grainAlpha = parseInt(grainIntensityInput.value);
+            if (grainAlpha > 0) {
+                // Create a small offscreen canvas to generate noise pattern memory-efficiently
+                const patternSize = 128;
+                const patternCanvas = document.createElement('canvas');
+                patternCanvas.width = patternSize;
+                patternCanvas.height = patternSize;
+                const pCtx = patternCanvas.getContext('2d');
+                const imgData = pCtx.createImageData(patternSize, patternSize);
+                const data = imgData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // Monochrome random noise
+                    const val = Math.random() * 255;
+                    data[i]     = val; // R
+                    data[i + 1] = val; // G
+                    data[i + 2] = val; // B
+                    data[i + 3] = grainAlpha; // Alpha (Opacity of grain)
+                }
+                pCtx.putImageData(imgData, 0, 0);
+                
+                ctx.save();
+                // 'overlay' blends the noise naturally with the photo's bright/dark spots
+                ctx.globalCompositeOperation = 'overlay'; 
+                ctx.fillStyle = ctx.createPattern(patternCanvas, 'repeat');
+                ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
+                ctx.restore();
+            }
+
+            // Inner shadow/inset effect around the photo itself to simulate physical print depth
+            ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+            ctx.lineWidth = Math.max(2, maxDim * 0.003);
+            ctx.strokeRect(borderSide, borderSide, originalWidth, originalHeight);
+            
+            // Highlight on the inner top/left edge to enhance inset 3D look
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = Math.max(1, maxDim * 0.0015);
+            ctx.beginPath();
+            ctx.moveTo(borderSide, borderSide + originalHeight);
+            ctx.lineTo(borderSide, borderSide);
+            ctx.lineTo(borderSide + originalWidth, borderSide);
+            ctx.stroke();
+
+            // 4. Gather Text Data
+            let dateStr = "";
+            if (dateInput.value) {
+                const d = new Date(dateInput.value);
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                dateStr = `${year}.${month}.${day}`; 
+            }
+
+            const locationStr = locationInput.value.trim();
+            const descStr = descInput.value.trim();
+
+            const lines = [];
+            if (dateStr) lines.push(dateStr);
+            if (locationStr) lines.push(locationStr);
+            if (descStr) lines.push(descStr);
+
+            if (lines.length === 0) return; // Nothing to draw
+
+            // 5. Configure Typography
+            const scaleFactor = parseFloat(fontSizeScaleInput.value);
+            // Font size relative to the canvas width so it fits well in the bottom border
+            const baseFontSize = (canvas.width * 0.03) * scaleFactor;
+            
+            ctx.font = `${baseFontSize}px 'Special Elite', monospace`;
+            ctx.fillStyle = textColorInput.value;
+            ctx.textBaseline = 'middle';
+
+            // Configure Shadow
+            const shadowType = textShadowInput.value;
+            if (shadowType === 'dark') {
+                ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+                ctx.shadowBlur = baseFontSize * 0.1;
+                ctx.shadowOffsetX = baseFontSize * 0.02;
+                ctx.shadowOffsetY = baseFontSize * 0.02;
+            } else if (shadowType === 'light') {
+                ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+                ctx.shadowBlur = baseFontSize * 0.1;
+                ctx.shadowOffsetX = baseFontSize * 0.02;
+                ctx.shadowOffsetY = baseFontSize * 0.02;
+            } else {
+                ctx.shadowColor = "transparent";
+            }
+
+            // 6. Calculate Positioning within the bottom border
+            const align = textAlignInput.value;
+            const marginX = canvas.width * 0.08; 
+            const lineHeight = baseFontSize * 1.3;
+            const totalTextHeight = lines.length * lineHeight;
+            
+            // Start Y so that the text block is vertically centered in the bottom border
+            const bottomAreaCenterY = originalHeight + borderSide + (borderBottom / 2);
+            const startY = bottomAreaCenterY - (totalTextHeight / 2) + (lineHeight / 2);
+
+            let startX;
+            ctx.textAlign = align;
+
+            if (align === 'left') {
+                startX = marginX;
+            } else if (align === 'right') {
+                startX = canvas.width - marginX;
+            } else {
+                // center
+                startX = canvas.width / 2;
+            }
+
+            // 7. Draw the text line by line
+            lines.forEach((line, index) => {
+                const currentY = startY + (index * lineHeight);
+                ctx.fillText(line, startX, currentY);
+            });
+            
+            ctx.shadowColor = "transparent";
+        }
+
+        function downloadImage() {
+            if (!currentImage) return;
+            
+            // The canvas is currently rendered at the full, original resolution of the uploaded image.
+            // We can directly get the data URL from it.
+            // Use 'image/jpeg' and a high quality factor (0.95) to balance size and detail
+            const dataURL = canvas.toDataURL('image/jpeg', 0.95);
+            
+            // Create a temporary link element to trigger the download
+            const link = document.createElement('a');
+            
+            // Generate a filename based on original or current date
+            const d = new Date();
+            const timeStamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${d.getHours()}${d.getMinutes()}`;
+            link.download = `stamped_photo_${timeStamp}.jpg`;
+            
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    });
+</script>
+
+</body>
+</html>
