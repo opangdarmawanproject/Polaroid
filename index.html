@@ -183,8 +183,31 @@
                     <label for="frameColor">Frame Color</label>
                     <input type="color" id="frameColor" value="#F4F0E6">
                 </div>
+                
+                <!-- NEW: Frame Format and Texture -->
+                <div class="input-group">
+                    <label for="frameFormat">Ukuran Polaroid (Format)</label>
+                    <select id="frameFormat">
+                        <option value="classic" selected>Classic Polaroid (Standar)</option>
+                        <option value="mini">Instax Mini (Lebih Tinggi)</option>
+                        <option value="wide">Instax Wide (Border Lebar)</option>
+                        <option value="square">Symmetrical Square (Sama Sisi)</option>
+                        <option value="thick">Bold & Thick (Tebal)</option>
+                        <option value="thin">Modern Thin (Tipis)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="frameTexture">Gaya Frame (Tekstur)</label>
+                    <select id="frameTexture">
+                        <option value="paper" selected>Kertas Matte (Standar)</option>
+                        <option value="clean">Bersih & Datar (Modern)</option>
+                        <option value="stained">Kertas Usang & Bernoda</option>
+                        <option value="worn">Tepi Kusam (Worn Edges)</option>
+                    </select>
+                </div>
+
                 <div class="input-group col-span-2">
-                    <label for="vintageFilter">Photo Filter (Retro Effect)</label>
+                    <label for="vintageFilter">Photo Filter (Retro Effect) - 20 Pilihan</label>
                     <select id="vintageFilter">
                         <option value="none">None (Original Photo)</option>
                         <option value="light" selected>Light Retro (Faded & Warm)</option>
@@ -197,6 +220,17 @@
                         <option value="warm">Golden Hour (Warm Polaroid 600)</option>
                         <option value="cyanotype">Cyanotype (Blue Print)</option>
                         <option value="fadedbw">Faded B&W (Old Newspaper)</option>
+                        <!-- NEW 10 OPTIONS -->
+                        <option value="pastel">Pastel Dream (Soft & Pinkish)</option>
+                        <option value="grunge">90s Grunge (Desaturated Green/Brown)</option>
+                        <option value="negative">Color Negative (Inverted)</option>
+                        <option value="cyberpunk">Cyberpunk (Neon Magenta Tint)</option>
+                        <option value="denim">Washed Denim (Faded Blue)</option>
+                        <option value="crimson">Crimson Red (Dark Red Monochrome)</option>
+                        <option value="amber">Amber Glow (High Saturation Orange)</option>
+                        <option value="emerald">Emerald Forest (Vintage Green)</option>
+                        <option value="overexposed">Overexposed (Blown-out Brightness)</option>
+                        <option value="pinhole">Pinhole Camera (Dark & Contrast)</option>
                     </select>
                 </div>
             </div>
@@ -275,6 +309,8 @@
         // Styling Inputs
         const textColorInput = document.getElementById('textColor');
         const frameColorInput = document.getElementById('frameColor');
+        const frameFormatInput = document.getElementById('frameFormat');
+        const frameTextureInput = document.getElementById('frameTexture');
         const vintageFilterInput = document.getElementById('vintageFilter');
         const vignetteIntensityInput = document.getElementById('vignetteIntensity');
         const grainIntensityInput = document.getElementById('grainIntensity');
@@ -305,7 +341,7 @@
         // Redraw when any input changes
         const inputsToWatch = [
             dateInput, locationInput, descInput, 
-            textColorInput, frameColorInput, vintageFilterInput, 
+            textColorInput, frameColorInput, frameFormatInput, frameTextureInput, vintageFilterInput, 
             vignetteIntensityInput, grainIntensityInput,
             textAlignInput, textShadowInput, fontSizeScaleInput
         ];
@@ -357,68 +393,102 @@
         function drawImageOnCanvas() {
             if (!currentImage) return;
 
-            // 1. Calculate Polaroid Dimensions
-            // Frame padding is based on the max dimension of the image to maintain proportions
+            // 1. Calculate Polaroid Dimensions based on chosen format
             const maxDim = Math.max(originalWidth, originalHeight);
-            const borderSide = maxDim * 0.05; // 5% border on sides and top
-            const borderBottom = maxDim * 0.20; // 20% border on bottom for text
+            
+            let borderSideRatio = 0.05;
+            let borderBottomRatio = 0.20;
+            const format = frameFormatInput.value;
+
+            // Sesuaikan ukuran padding border berdasarkan format
+            if (format === 'mini') { borderSideRatio = 0.07; borderBottomRatio = 0.28; }
+            else if (format === 'wide') { borderSideRatio = 0.04; borderBottomRatio = 0.15; }
+            else if (format === 'square') { borderSideRatio = 0.05; borderBottomRatio = 0.05; }
+            else if (format === 'thick') { borderSideRatio = 0.09; borderBottomRatio = 0.25; }
+            else if (format === 'thin') { borderSideRatio = 0.02; borderBottomRatio = 0.08; }
+
+            const borderSide = maxDim * borderSideRatio;
+            const borderBottom = maxDim * borderBottomRatio;
 
             // Set canvas size to include the frame
             canvas.width = originalWidth + (borderSide * 2);
             canvas.height = originalHeight + borderSide + borderBottom;
 
-            // 2. Draw Polaroid Frame (Background)
+            // 2. Draw Polaroid Frame (Background) & Textures
             ctx.fillStyle = frameColorInput.value;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Add subtle paper texture/lighting to the frame
-            const frameGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-            frameGrad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
-            frameGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
-            frameGrad.addColorStop(1, 'rgba(0, 0, 0, 0.04)');
-            ctx.fillStyle = frameGrad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const texture = frameTextureInput.value;
+            
+            if (texture !== 'clean') {
+                // Add subtle paper texture/lighting to the frame (default for non-clean)
+                const frameGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                frameGrad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+                frameGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+                frameGrad.addColorStop(1, 'rgba(0, 0, 0, 0.04)');
+                ctx.fillStyle = frameGrad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            if (texture === 'stained') {
+                // Tambahkan efek noda / kotor di sudut kertas
+                const stain = ctx.createRadialGradient(0, 0, 0, 0, 0, maxDim * 0.6);
+                stain.addColorStop(0, 'rgba(139, 69, 19, 0.12)'); 
+                stain.addColorStop(1, 'rgba(139, 69, 19, 0)');
+                ctx.fillStyle = stain;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const stain2 = ctx.createRadialGradient(canvas.width, canvas.height, 0, canvas.width, canvas.height, maxDim * 0.5);
+                stain2.addColorStop(0, 'rgba(101, 67, 33, 0.15)');
+                stain2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = stain2;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            if (texture === 'worn') {
+                // Tambahkan border kusam di ujung frame
+                ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                ctx.lineWidth = Math.max(5, maxDim * 0.015);
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = Math.max(2, maxDim * 0.005);
+                ctx.strokeRect(ctx.lineWidth, ctx.lineWidth, canvas.width - ctx.lineWidth*2, canvas.height - ctx.lineWidth*2);
+            }
 
             // Subtle outer border for physical depth
             ctx.strokeStyle = 'rgba(0,0,0,0.08)';
             ctx.lineWidth = Math.max(1, maxDim * 0.002);
             ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
-            // 3. Draw Base Image with Optional Vintage Filter
+            // 3. Draw Base Image with Optional Vintage Filter (20 Pilihan)
             ctx.save();
             const filterType = vintageFilterInput.value;
             let overlayColor = null;
             let hasFlashOverlay = false;
 
-            if (filterType === 'light') {
-                ctx.filter = 'sepia(0.3) contrast(1.1) brightness(0.95) saturate(0.85)';
-            } else if (filterType === 'heavy') {
-                ctx.filter = 'sepia(0.6) contrast(1.25) brightness(0.9) saturate(0.6)';
-            } else if (filterType === 'flash') {
-                ctx.filter = 'contrast(1.35) brightness(1.1) saturate(1.15) sepia(0.1)';
-                hasFlashOverlay = true;
-            } else if (filterType === 'bw') {
-                ctx.filter = 'grayscale(1) contrast(1.25) brightness(0.95)';
-            } else if (filterType === 'cool') {
-                ctx.filter = 'contrast(1.15) brightness(0.95) saturate(0.75)';
-                overlayColor = 'rgba(0, 50, 90, 0.15)'; // Blue tint
-            } else if (filterType === 'matte') {
-                ctx.filter = 'sepia(0.2) contrast(0.85) brightness(1.1) saturate(0.75)';
-                overlayColor = 'rgba(120, 80, 50, 0.1)'; // Warm washed out tint
-            } else if (filterType === 'lomo') {
-                ctx.filter = 'contrast(1.4) saturate(1.5) brightness(0.95)';
-                overlayColor = 'rgba(50, 100, 0, 0.1)'; // Subtle green shift for cross-processing
-            } else if (filterType === 'warm') {
-                ctx.filter = 'sepia(0.3) contrast(1.1) saturate(1.2)';
-                overlayColor = 'rgba(255, 120, 0, 0.15)'; // Gold/warm tint
-            } else if (filterType === 'cyanotype') {
-                // Mengubah warna menjadi sepia (coklat), lalu memutar hue (rona warna) 180 derajat menjadikannya biru
-                ctx.filter = 'sepia(1) hue-rotate(180deg) contrast(1.5) brightness(0.9)';
-                overlayColor = 'rgba(0, 50, 100, 0.2)'; // Extra blue depth
-            } else if (filterType === 'fadedbw') {
-                ctx.filter = 'grayscale(1) contrast(0.7) brightness(1.15)';
-            } else {
-                ctx.filter = 'none';
+            switch(filterType) {
+                case 'light': ctx.filter = 'sepia(0.3) contrast(1.1) brightness(0.95) saturate(0.85)'; break;
+                case 'heavy': ctx.filter = 'sepia(0.6) contrast(1.25) brightness(0.9) saturate(0.6)'; break;
+                case 'flash': ctx.filter = 'contrast(1.35) brightness(1.1) saturate(1.15) sepia(0.1)'; hasFlashOverlay = true; break;
+                case 'bw': ctx.filter = 'grayscale(1) contrast(1.25) brightness(0.95)'; break;
+                case 'cool': ctx.filter = 'contrast(1.15) brightness(0.95) saturate(0.75)'; overlayColor = 'rgba(0, 50, 90, 0.15)'; break;
+                case 'matte': ctx.filter = 'sepia(0.2) contrast(0.85) brightness(1.1) saturate(0.75)'; overlayColor = 'rgba(120, 80, 50, 0.1)'; break;
+                case 'lomo': ctx.filter = 'contrast(1.4) saturate(1.5) brightness(0.95)'; overlayColor = 'rgba(50, 100, 0, 0.1)'; break;
+                case 'warm': ctx.filter = 'sepia(0.3) contrast(1.1) saturate(1.2)'; overlayColor = 'rgba(255, 120, 0, 0.15)'; break;
+                case 'cyanotype': ctx.filter = 'sepia(1) hue-rotate(180deg) contrast(1.5) brightness(0.9)'; overlayColor = 'rgba(0, 50, 100, 0.2)'; break;
+                case 'fadedbw': ctx.filter = 'grayscale(1) contrast(0.7) brightness(1.15)'; break;
+                case 'pastel': ctx.filter = 'contrast(0.85) brightness(1.1) saturate(1.3)'; overlayColor = 'rgba(255, 182, 193, 0.15)'; break;
+                case 'grunge': ctx.filter = 'contrast(1.2) saturate(0.6) sepia(0.3)'; overlayColor = 'rgba(85, 107, 47, 0.15)'; break;
+                case 'negative': ctx.filter = 'invert(1) contrast(1.1)'; break;
+                case 'cyberpunk': ctx.filter = 'contrast(1.3) saturate(1.5)'; overlayColor = 'rgba(255, 0, 255, 0.12)'; break;
+                case 'denim': ctx.filter = 'grayscale(0.4) contrast(0.8) brightness(1.1)'; overlayColor = 'rgba(0, 0, 128, 0.15)'; break;
+                case 'crimson': ctx.filter = 'grayscale(1) contrast(1.2)'; overlayColor = 'rgba(139, 0, 0, 0.3)'; break;
+                case 'amber': ctx.filter = 'sepia(1) saturate(2) contrast(1.1)'; overlayColor = 'rgba(255, 140, 0, 0.15)'; break;
+                case 'emerald': ctx.filter = 'contrast(1.1) saturate(1.2) sepia(0.2)'; overlayColor = 'rgba(0, 128, 0, 0.15)'; break;
+                case 'overexposed': ctx.filter = 'brightness(1.4) contrast(0.85) saturate(0.8)'; break;
+                case 'pinhole': ctx.filter = 'contrast(1.5) brightness(0.9) saturate(0.5)'; overlayColor = 'rgba(50, 20, 0, 0.2)'; break;
+                default: ctx.filter = 'none';
             }
             
             ctx.drawImage(currentImage, borderSide, borderSide, originalWidth, originalHeight);
