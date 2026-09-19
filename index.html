@@ -33,7 +33,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Default aspect ratio, will be updated via JS */
             aspect-ratio: 1 / 1; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
@@ -60,8 +59,11 @@
         
         .custom-file-upload {
             border: 2px dashed #9ca3af;
-            display: inline-block;
-            padding: 1rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem 1rem;
             cursor: pointer;
             border-radius: 0.5rem;
             background-color: #f9fafb;
@@ -69,6 +71,9 @@
             transition: all 0.3s;
             text-align: center;
             width: 100%;
+            height: 100%;
+            font-size: 0.875rem;
+            font-weight: 500;
         }
 
         .custom-file-upload:hover {
@@ -136,11 +141,17 @@
         .btn-secondary:hover {
             background-color: #059669;
         }
+
+        /* Modal specific styles */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-<div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
     
     <!-- Controls Section -->
     <div class="lg:col-span-1 flex flex-col gap-4">
@@ -148,13 +159,19 @@
         <p class="text-sm text-gray-600 mb-4">Turn your high-resolution photos into retro Polaroid-style prints with typewriter text on the frame.</p>
         
         <div class="controls-panel">
-            <!-- File Upload -->
-            <div class="mb-6">
+            <!-- File Upload & Camera Buttons -->
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <!-- Upload File -->
                 <label class="custom-file-upload">
                     <input type="file" id="imageLoader" accept="image/*" />
-                    <svg class="w-8 h-8 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    <span>Click to Upload High-Res Photo</span>
+                    <svg class="w-7 h-7 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span>Upload File</span>
                 </label>
+                <!-- Take Camera Photo -->
+                <button id="openCameraBtn" class="custom-file-upload m-0 outline-none">
+                    <svg class="w-7 h-7 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Kamera</span>
+                </button>
             </div>
 
             <!-- Content Inputs -->
@@ -184,7 +201,6 @@
                     <input type="color" id="frameColor" value="#F4F0E6">
                 </div>
                 
-                <!-- NEW: Frame Format and Texture -->
                 <div class="input-group">
                     <label for="frameFormat">Ukuran Polaroid (Format)</label>
                     <select id="frameFormat">
@@ -207,35 +223,49 @@
                 </div>
 
                 <div class="input-group col-span-2">
-                    <label for="vintageFilter">Photo Filter (Retro Effect) - 20 Pilihan</label>
+                    <label for="vintageFilter">Photo Filter (30 Pilihan)</label>
                     <select id="vintageFilter">
                         <option value="none">None (Original Photo)</option>
-                        <option value="light" selected>Light Retro (Faded & Warm)</option>
-                        <option value="heavy">Heavy Vintage (High Contrast Sepia)</option>
-                        <option value="flash">Disposable Flash (Harsh Light & Flash)</option>
-                        <option value="bw">Classic B&W (Monochrome)</option>
-                        <option value="cool">Cool Film (Cinematic Cyan Tint)</option>
-                        <option value="matte">70s Matte (Washed Out & Soft)</option>
-                        <option value="lomo">Lomography (Vivid & Cross-Processed)</option>
-                        <option value="warm">Golden Hour (Warm Polaroid 600)</option>
-                        <option value="cyanotype">Cyanotype (Blue Print)</option>
-                        <option value="fadedbw">Faded B&W (Old Newspaper)</option>
-                        <!-- NEW 10 OPTIONS -->
-                        <option value="pastel">Pastel Dream (Soft & Pinkish)</option>
-                        <option value="grunge">90s Grunge (Desaturated Green/Brown)</option>
-                        <option value="negative">Color Negative (Inverted)</option>
-                        <option value="cyberpunk">Cyberpunk (Neon Magenta Tint)</option>
-                        <option value="denim">Washed Denim (Faded Blue)</option>
-                        <option value="crimson">Crimson Red (Dark Red Monochrome)</option>
-                        <option value="amber">Amber Glow (High Saturation Orange)</option>
-                        <option value="emerald">Emerald Forest (Vintage Green)</option>
-                        <option value="overexposed">Overexposed (Blown-out Brightness)</option>
-                        <option value="pinhole">Pinhole Camera (Dark & Contrast)</option>
+                        <optgroup label="NEW: Film & Cinematic">
+                            <option value="film_kodak">Film: Kodak Portra 400 (Warm & Soft)</option>
+                            <option value="film_fuji">Film: Fuji Superia (Cool & Moody)</option>
+                            <option value="film_cinematic">Cinematic: Teal & Orange</option>
+                            <option value="film_noir">Cinematic: Noir Classic (Contrast B&W)</option>
+                            <option value="film_vhs">Vintage: 90s VHS Camcorder</option>
+                        </optgroup>
+                        <optgroup label="Retro & Vintage">
+                            <option value="light" selected>Light Retro (Faded & Warm)</option>
+                            <option value="heavy">Heavy Vintage (High Contrast Sepia)</option>
+                            <option value="flash">Disposable Flash (Harsh Light)</option>
+                            <option value="bw">Classic B&W (Monochrome)</option>
+                            <option value="cool">Cool Film (Cyan Tint)</option>
+                            <option value="matte">70s Matte (Washed Out)</option>
+                            <option value="lomo">Lomography (Vivid)</option>
+                            <option value="warm">Golden Hour (Warm Polaroid)</option>
+                            <option value="cyanotype">Cyanotype (Blue Print)</option>
+                            <option value="fadedbw">Faded B&W (Old Newspaper)</option>
+                            <option value="pastel">Pastel Dream (Soft Pink)</option>
+                            <option value="grunge">90s Grunge (Desaturated)</option>
+                            <option value="negative">Color Negative (Inverted)</option>
+                            <option value="cyberpunk">Cyberpunk (Neon Tint)</option>
+                            <option value="denim">Washed Denim (Faded Blue)</option>
+                            <option value="crimson">Crimson Red (Dark Red)</option>
+                            <option value="amber">Amber Glow (Orange)</option>
+                            <option value="emerald">Emerald Forest (Green)</option>
+                            <option value="overexposed">Overexposed (Bright)</option>
+                            <option value="pinhole">Pinhole Camera (Dark)</option>
+                        </optgroup>
+                        <optgroup label="Pro Studio">
+                            <option value="pro_studio">Pro: Studio Portrait</option>
+                            <option value="pro_cinematic">Pro: Cinematic Classic</option>
+                            <option value="pro_landscape">Pro: Landscape Enhancer</option>
+                            <option value="pro_bw">Pro: Fine Art B&W</option>
+                            <option value="pro_commercial">Pro: Commercial Punchy</option>
+                        </optgroup>
                     </select>
                 </div>
             </div>
 
-            <!-- New Camera Effects -->
             <div class="grid grid-cols-2 gap-4">
                 <div class="input-group">
                     <label for="vignetteIntensity">Vignette (Dark Edges)</label>
@@ -283,13 +313,41 @@
     <div class="lg:col-span-2 flex flex-col">
         <h2 class="text-xl font-semibold text-gray-700 mb-4">Preview</h2>
         <div id="canvas-container">
-            <!-- Canvas will be injected here by JS -->
-            <p id="placeholder-text" class="text-gray-500 text-center absolute w-full z-10 pointer-events-none">Upload an image to start editing</p>
+            <p id="placeholder-text" class="text-gray-500 text-center absolute w-full z-10 pointer-events-none">Upload an image or take a photo to start editing</p>
             <canvas id="imageCanvas"></canvas>
         </div>
         <p class="text-xs text-gray-500 mt-2 text-center">Preview is scaled down. Downloaded image retains original resolution.</p>
     </div>
 
+</div>
+
+<!-- Camera Modal (Hidden by default) -->
+<div id="cameraModal" class="hidden fixed inset-0 z-50 modal-overlay flex flex-col items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-4 flex flex-col items-center">
+        <div class="w-full flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Ambil Foto</h3>
+            <button id="closeCameraBtnX" class="text-gray-500 hover:text-gray-800 p-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <p id="cameraErrorText" class="hidden w-full p-3 mb-4 bg-red-100 text-red-700 rounded-lg text-sm text-center">
+            <!-- Error message will be injected here if camera access fails -->
+        </p>
+
+        <!-- Video stream area -->
+        <div class="w-full bg-black rounded-lg overflow-hidden mb-4 relative flex items-center justify-center" style="min-height: 40vh; max-height: 60vh;">
+            <video id="cameraVideo" class="w-full h-full object-cover" autoplay playsinline></video>
+        </div>
+
+        <div class="flex gap-4 w-full">
+            <button id="captureBtn" class="btn bg-blue-600 hover:bg-blue-700 flex-1 flex justify-center items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                Snap Photo
+            </button>
+            <button id="closeCameraBtn" class="btn bg-gray-500 hover:bg-gray-600 flex-none w-auto">Batal</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -301,6 +359,15 @@
         const canvasContainer = document.getElementById('canvas-container');
         const placeholderText = document.getElementById('placeholder-text');
         
+        // Camera Elements
+        const openCameraBtn = document.getElementById('openCameraBtn');
+        const cameraModal = document.getElementById('cameraModal');
+        const cameraVideo = document.getElementById('cameraVideo');
+        const captureBtn = document.getElementById('captureBtn');
+        const closeCameraBtn = document.getElementById('closeCameraBtn');
+        const closeCameraBtnX = document.getElementById('closeCameraBtnX');
+        const cameraErrorText = document.getElementById('cameraErrorText');
+
         // Inputs
         const dateInput = document.getElementById('dateInput');
         const locationInput = document.getElementById('locationInput');
@@ -318,27 +385,26 @@
         const textShadowInput = document.getElementById('textShadow');
         const fontSizeScaleInput = document.getElementById('fontSizeScale');
         
-        // Buttons
         const downloadBtn = document.getElementById('downloadBtn');
 
         // --- State ---
         let currentImage = null;
         let originalWidth = 0;
         let originalHeight = 0;
+        let cameraStream = null;
 
         // Set default date to today
         const today = new Date();
         const yyyy = today.getFullYear();
-        let mm = today.getMonth() + 1; // Months start at 0!
+        let mm = today.getMonth() + 1; 
         let dd = today.getDate();
         if (dd < 10) dd = '0' + dd;
         if (mm < 10) mm = '0' + mm;
         dateInput.value = `${yyyy}-${mm}-${dd}`;
 
-        // Event Listeners ---
+        // --- Event Listeners ---
         imageLoader.addEventListener('change', handleImageUpload, false);
         
-        // Redraw when any input changes
         const inputsToWatch = [
             dateInput, locationInput, descInput, 
             textColorInput, frameColorInput, frameFormatInput, frameTextureInput, vintageFilterInput, 
@@ -352,17 +418,66 @@
 
         downloadBtn.addEventListener('click', downloadImage);
 
-        // Handle window resize to adjust canvas preview size if needed
-        window.addEventListener('resize', () => {
-            if (currentImage) {
-                 // We don't necessarily need to redraw on resize because CSS handles scaling,
-                 // but if we were doing complex manual layout in JS we might.
-                 // Currently, CSS object-fit: contain handles the preview rendering nicely.
+        // --- Camera Handling ---
+        openCameraBtn.addEventListener('click', async () => {
+            cameraModal.classList.remove('hidden');
+            cameraErrorText.classList.add('hidden');
+            try {
+                // Request back camera if on mobile, fallback to any available
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } 
+                });
+                cameraVideo.srcObject = cameraStream;
+            } catch (err) {
+                // No alert used! Show message in modal.
+                cameraErrorText.textContent = "Kamera tidak dapat diakses. Mohon periksa izin browser atau perangkat Anda.";
+                cameraErrorText.classList.remove('hidden');
             }
         });
 
+        function closeCameraModal() {
+            cameraModal.classList.add('hidden');
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+        }
+
+        closeCameraBtn.addEventListener('click', closeCameraModal);
+        closeCameraBtnX.addEventListener('click', closeCameraModal);
+
+        captureBtn.addEventListener('click', () => {
+            if (!cameraStream) return;
+            
+            // Render video frame to a temporary canvas
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = cameraVideo.videoWidth;
+            tempCanvas.height = cameraVideo.videoHeight;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.drawImage(cameraVideo, 0, 0);
+            
+            // Load it as our working image
+            const img = new Image();
+            img.onload = function() {
+                currentImage = img;
+                originalWidth = img.width;
+                originalHeight = img.height;
+                
+                canvas.width = originalWidth;
+                canvas.height = originalHeight;
+                
+                canvasContainer.style.aspectRatio = `${originalWidth} / ${originalHeight}`;
+                placeholderText.style.display = 'none';
+                downloadBtn.disabled = false;
+                
+                drawImageOnCanvas();
+            };
+            img.src = tempCanvas.toDataURL('image/jpeg', 1.0);
+            
+            closeCameraModal();
+        });
+
         // --- Functions ---
-        
         function handleImageUpload(e) {
             const reader = new FileReader();
             reader.onload = function(event) {
@@ -372,11 +487,9 @@
                     originalWidth = img.width;
                     originalHeight = img.height;
                     
-                    // Set canvas dimensions to ACTUAL image dimensions for high-res output
                     canvas.width = originalWidth;
                     canvas.height = originalHeight;
                     
-                    // Adjust container aspect ratio to match image so it fits nicely
                     canvasContainer.style.aspectRatio = `${originalWidth} / ${originalHeight}`;
                     placeholderText.style.display = 'none';
                     downloadBtn.disabled = false;
@@ -393,14 +506,13 @@
         function drawImageOnCanvas() {
             if (!currentImage) return;
 
-            // 1. Calculate Polaroid Dimensions based on chosen format
+            // 1. Calculate Polaroid Dimensions
             const maxDim = Math.max(originalWidth, originalHeight);
             
             let borderSideRatio = 0.05;
             let borderBottomRatio = 0.20;
             const format = frameFormatInput.value;
 
-            // Sesuaikan ukuran padding border berdasarkan format
             if (format === 'mini') { borderSideRatio = 0.07; borderBottomRatio = 0.28; }
             else if (format === 'wide') { borderSideRatio = 0.04; borderBottomRatio = 0.15; }
             else if (format === 'square') { borderSideRatio = 0.05; borderBottomRatio = 0.05; }
@@ -410,18 +522,16 @@
             const borderSide = maxDim * borderSideRatio;
             const borderBottom = maxDim * borderBottomRatio;
 
-            // Set canvas size to include the frame
             canvas.width = originalWidth + (borderSide * 2);
             canvas.height = originalHeight + borderSide + borderBottom;
 
-            // 2. Draw Polaroid Frame (Background) & Textures
+            // 2. Draw Frame & Textures
             ctx.fillStyle = frameColorInput.value;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             const texture = frameTextureInput.value;
             
             if (texture !== 'clean') {
-                // Add subtle paper texture/lighting to the frame (default for non-clean)
                 const frameGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
                 frameGrad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
                 frameGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
@@ -431,7 +541,6 @@
             }
 
             if (texture === 'stained') {
-                // Tambahkan efek noda / kotor di sudut kertas
                 const stain = ctx.createRadialGradient(0, 0, 0, 0, 0, maxDim * 0.6);
                 stain.addColorStop(0, 'rgba(139, 69, 19, 0.12)'); 
                 stain.addColorStop(1, 'rgba(139, 69, 19, 0)');
@@ -446,7 +555,6 @@
             }
 
             if (texture === 'worn') {
-                // Tambahkan border kusam di ujung frame
                 ctx.strokeStyle = 'rgba(0,0,0,0.15)';
                 ctx.lineWidth = Math.max(5, maxDim * 0.015);
                 ctx.strokeRect(0, 0, canvas.width, canvas.height);
@@ -456,18 +564,24 @@
                 ctx.strokeRect(ctx.lineWidth, ctx.lineWidth, canvas.width - ctx.lineWidth*2, canvas.height - ctx.lineWidth*2);
             }
 
-            // Subtle outer border for physical depth
             ctx.strokeStyle = 'rgba(0,0,0,0.08)';
             ctx.lineWidth = Math.max(1, maxDim * 0.002);
             ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
-            // 3. Draw Base Image with Optional Vintage Filter (20 Pilihan)
+            // 3. Draw Image with Filters (Now includes 5 New Cinematic/Film Styles)
             ctx.save();
             const filterType = vintageFilterInput.value;
             let overlayColor = null;
             let hasFlashOverlay = false;
 
             switch(filterType) {
+                // --- NEW 5 FILM/CINEMATIC FILTERS ---
+                case 'film_kodak': ctx.filter = 'contrast(1.05) saturate(1.2) sepia(0.25) brightness(1.05)'; overlayColor = 'rgba(255, 180, 100, 0.08)'; break;
+                case 'film_fuji': ctx.filter = 'contrast(1.15) saturate(1.1) brightness(1.02)'; overlayColor = 'rgba(0, 200, 120, 0.06)'; break;
+                case 'film_cinematic': ctx.filter = 'contrast(1.2) saturate(1.25) sepia(0.15)'; overlayColor = 'rgba(0, 120, 150, 0.12)'; break;
+                case 'film_noir': ctx.filter = 'grayscale(1) contrast(1.6) brightness(0.9)'; overlayColor = 'rgba(20, 20, 20, 0.1)'; break;
+                case 'film_vhs': ctx.filter = 'contrast(0.9) saturate(0.7) sepia(0.1)'; overlayColor = 'rgba(255, 0, 180, 0.07)'; break;
+                // ------------------------------------
                 case 'light': ctx.filter = 'sepia(0.3) contrast(1.1) brightness(0.95) saturate(0.85)'; break;
                 case 'heavy': ctx.filter = 'sepia(0.6) contrast(1.25) brightness(0.9) saturate(0.6)'; break;
                 case 'flash': ctx.filter = 'contrast(1.35) brightness(1.1) saturate(1.15) sepia(0.1)'; hasFlashOverlay = true; break;
@@ -488,35 +602,33 @@
                 case 'emerald': ctx.filter = 'contrast(1.1) saturate(1.2) sepia(0.2)'; overlayColor = 'rgba(0, 128, 0, 0.15)'; break;
                 case 'overexposed': ctx.filter = 'brightness(1.4) contrast(0.85) saturate(0.8)'; break;
                 case 'pinhole': ctx.filter = 'contrast(1.5) brightness(0.9) saturate(0.5)'; overlayColor = 'rgba(50, 20, 0, 0.2)'; break;
+                case 'pro_studio': ctx.filter = 'brightness(1.05) contrast(0.95) saturate(1.05)'; overlayColor = 'rgba(255, 230, 200, 0.05)'; break;
+                case 'pro_cinematic': ctx.filter = 'contrast(1.15) saturate(1.2) sepia(0.1)'; overlayColor = 'rgba(0, 80, 120, 0.15)'; break;
+                case 'pro_landscape': ctx.filter = 'contrast(1.15) saturate(1.35) brightness(1.05)'; break;
+                case 'pro_bw': ctx.filter = 'grayscale(1) contrast(1.3) brightness(1.1)'; break;
+                case 'pro_commercial': ctx.filter = 'contrast(1.1) brightness(1.1) saturate(1.15)'; break;
                 default: ctx.filter = 'none';
             }
             
             ctx.drawImage(currentImage, borderSide, borderSide, originalWidth, originalHeight);
             ctx.restore();
 
-            // Apply color tint overlays for specific filters
+            // Filters and Vignette overlays
             if (overlayColor) {
                 ctx.fillStyle = overlayColor;
                 ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
             }
 
-            // Apply Flash effect (harsh light burst in the center)
             if (hasFlashOverlay) {
                 const centerX = borderSide + (originalWidth / 2);
                 const centerY = borderSide + (originalHeight / 2);
                 const maxRadius = Math.max(originalWidth, originalHeight) * 0.7;
-                
-                const flashGrad = ctx.createRadialGradient(
-                    centerX, centerY, 0, 
-                    centerX, centerY, maxRadius
-                );
-                // Center is intensely bright, fading outwards
+                const flashGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
                 flashGrad.addColorStop(0, 'rgba(255, 255, 255, 0.35)'); 
                 flashGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0.08)');
                 flashGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                
                 ctx.save();
-                ctx.globalCompositeOperation = 'screen'; // Screen mode creates a bright light effect
+                ctx.globalCompositeOperation = 'screen';
                 ctx.fillStyle = flashGrad;
                 ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
                 ctx.restore();
@@ -528,10 +640,7 @@
                 const centerY = borderSide + (originalHeight / 2);
                 const radius = Math.max(originalWidth, originalHeight) * 0.7;
                 
-                const vignette = ctx.createRadialGradient(
-                    centerX, centerY, radius * 0.3, 
-                    centerX, centerY, radius
-                );
+                const vignette = ctx.createRadialGradient(centerX, centerY, radius * 0.3, centerX, centerY, radius);
                 vignette.addColorStop(0, 'rgba(0,0,0,0)');
                 vignette.addColorStop(1, `rgba(0, 0, 0, ${vigIntensity})`);
                 
@@ -541,7 +650,6 @@
 
             const grainAlpha = parseInt(grainIntensityInput.value);
             if (grainAlpha > 0) {
-                // Create a small offscreen canvas to generate noise pattern memory-efficiently
                 const patternSize = 128;
                 const patternCanvas = document.createElement('canvas');
                 patternCanvas.width = patternSize;
@@ -551,29 +659,26 @@
                 const data = imgData.data;
                 
                 for (let i = 0; i < data.length; i += 4) {
-                    // Monochrome random noise
                     const val = Math.random() * 255;
                     data[i]     = val; // R
                     data[i + 1] = val; // G
                     data[i + 2] = val; // B
-                    data[i + 3] = grainAlpha; // Alpha (Opacity of grain)
+                    data[i + 3] = grainAlpha; // Alpha
                 }
                 pCtx.putImageData(imgData, 0, 0);
                 
                 ctx.save();
-                // 'overlay' blends the noise naturally with the photo's bright/dark spots
                 ctx.globalCompositeOperation = 'overlay'; 
                 ctx.fillStyle = ctx.createPattern(patternCanvas, 'repeat');
                 ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
                 ctx.restore();
             }
 
-            // Inner shadow/inset effect around the photo itself to simulate physical print depth
+            // Inset borders for depth
             ctx.strokeStyle = 'rgba(0,0,0,0.18)';
             ctx.lineWidth = Math.max(2, maxDim * 0.003);
             ctx.strokeRect(borderSide, borderSide, originalWidth, originalHeight);
             
-            // Highlight on the inner top/left edge to enhance inset 3D look
             ctx.strokeStyle = 'rgba(255,255,255,0.3)';
             ctx.lineWidth = Math.max(1, maxDim * 0.0015);
             ctx.beginPath();
@@ -582,7 +687,7 @@
             ctx.lineTo(borderSide + originalWidth, borderSide);
             ctx.stroke();
 
-            // 4. Gather Text Data
+            // 4. Gather & Draw Text
             let dateStr = "";
             if (dateInput.value) {
                 const d = new Date(dateInput.value);
@@ -600,18 +705,15 @@
             if (locationStr) lines.push(locationStr);
             if (descStr) lines.push(descStr);
 
-            if (lines.length === 0) return; // Nothing to draw
+            if (lines.length === 0) return;
 
-            // 5. Configure Typography
             const scaleFactor = parseFloat(fontSizeScaleInput.value);
-            // Font size relative to the canvas width so it fits well in the bottom border
             const baseFontSize = (canvas.width * 0.03) * scaleFactor;
             
             ctx.font = `${baseFontSize}px 'Special Elite', monospace`;
             ctx.fillStyle = textColorInput.value;
             ctx.textBaseline = 'middle';
 
-            // Configure Shadow
             const shadowType = textShadowInput.value;
             if (shadowType === 'dark') {
                 ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
@@ -627,13 +729,11 @@
                 ctx.shadowColor = "transparent";
             }
 
-            // 6. Calculate Positioning within the bottom border
             const align = textAlignInput.value;
             const marginX = canvas.width * 0.08; 
             const lineHeight = baseFontSize * 1.3;
             const totalTextHeight = lines.length * lineHeight;
             
-            // Start Y so that the text block is vertically centered in the bottom border
             const bottomAreaCenterY = originalHeight + borderSide + (borderBottom / 2);
             const startY = bottomAreaCenterY - (totalTextHeight / 2) + (lineHeight / 2);
 
@@ -645,11 +745,9 @@
             } else if (align === 'right') {
                 startX = canvas.width - marginX;
             } else {
-                // center
                 startX = canvas.width / 2;
             }
 
-            // 7. Draw the text line by line
             lines.forEach((line, index) => {
                 const currentY = startY + (index * lineHeight);
                 ctx.fillText(line, startX, currentY);
@@ -660,16 +758,8 @@
 
         function downloadImage() {
             if (!currentImage) return;
-            
-            // The canvas is currently rendered at the full, original resolution of the uploaded image.
-            // We can directly get the data URL from it.
-            // Use 'image/jpeg' and a high quality factor (0.95) to balance size and detail
             const dataURL = canvas.toDataURL('image/jpeg', 0.95);
-            
-            // Create a temporary link element to trigger the download
             const link = document.createElement('a');
-            
-            // Generate a filename based on original or current date
             const d = new Date();
             const timeStamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${d.getHours()}${d.getMinutes()}`;
             link.download = `stamped_photo_${timeStamp}.jpg`;
