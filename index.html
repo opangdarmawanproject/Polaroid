@@ -189,6 +189,10 @@
                         <option value="none">None (Original Photo)</option>
                         <option value="light" selected>Light Retro (Faded & Warm)</option>
                         <option value="heavy">Heavy Vintage (High Contrast Sepia)</option>
+                        <option value="flash">Disposable Flash (Harsh Light & Flash)</option>
+                        <option value="bw">Classic B&W (Monochrome)</option>
+                        <option value="cool">Cool Film (Cinematic Cyan Tint)</option>
+                        <option value="matte">70s Matte (Washed Out & Soft)</option>
                     </select>
                 </div>
             </div>
@@ -379,16 +383,58 @@
             // 3. Draw Base Image with Optional Vintage Filter
             ctx.save();
             const filterType = vintageFilterInput.value;
+            let overlayColor = null;
+            let hasFlashOverlay = false;
+
             if (filterType === 'light') {
                 ctx.filter = 'sepia(0.3) contrast(1.1) brightness(0.95) saturate(0.85)';
             } else if (filterType === 'heavy') {
                 ctx.filter = 'sepia(0.6) contrast(1.25) brightness(0.9) saturate(0.6)';
+            } else if (filterType === 'flash') {
+                ctx.filter = 'contrast(1.35) brightness(1.1) saturate(1.15) sepia(0.1)';
+                hasFlashOverlay = true;
+            } else if (filterType === 'bw') {
+                ctx.filter = 'grayscale(1) contrast(1.25) brightness(0.95)';
+            } else if (filterType === 'cool') {
+                ctx.filter = 'contrast(1.15) brightness(0.95) saturate(0.75)';
+                overlayColor = 'rgba(0, 50, 90, 0.15)'; // Blue tint
+            } else if (filterType === 'matte') {
+                ctx.filter = 'sepia(0.2) contrast(0.85) brightness(1.1) saturate(0.75)';
+                overlayColor = 'rgba(120, 80, 50, 0.1)'; // Warm washed out tint
             } else {
                 ctx.filter = 'none';
             }
             
             ctx.drawImage(currentImage, borderSide, borderSide, originalWidth, originalHeight);
             ctx.restore();
+
+            // Apply color tint overlays for specific filters
+            if (overlayColor) {
+                ctx.fillStyle = overlayColor;
+                ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
+            }
+
+            // Apply Flash effect (harsh light burst in the center)
+            if (hasFlashOverlay) {
+                const centerX = borderSide + (originalWidth / 2);
+                const centerY = borderSide + (originalHeight / 2);
+                const maxRadius = Math.max(originalWidth, originalHeight) * 0.7;
+                
+                const flashGrad = ctx.createRadialGradient(
+                    centerX, centerY, 0, 
+                    centerX, centerY, maxRadius
+                );
+                // Center is intensely bright, fading outwards
+                flashGrad.addColorStop(0, 'rgba(255, 255, 255, 0.35)'); 
+                flashGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0.08)');
+                flashGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.save();
+                ctx.globalCompositeOperation = 'screen'; // Screen mode creates a bright light effect
+                ctx.fillStyle = flashGrad;
+                ctx.fillRect(borderSide, borderSide, originalWidth, originalHeight);
+                ctx.restore();
+            }
 
             const vigIntensity = parseFloat(vignetteIntensityInput.value);
             if (vigIntensity > 0) {
