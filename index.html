@@ -335,6 +335,11 @@
             <!-- Error message will be injected here if camera access fails -->
         </p>
 
+        <!-- Lens Selector (Hidden until loaded) -->
+        <select id="cameraDeviceSelect" class="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm hidden font-medium text-gray-700 outline-none focus:border-blue-500">
+            <option value="">Memuat daftar lensa...</option>
+        </select>
+
         <!-- Video stream area -->
         <div class="w-full bg-black rounded-lg overflow-hidden mb-4 relative flex items-center justify-center" style="min-height: 40vh; max-height: 60vh;">
             <video id="cameraVideo" class="w-full h-full object-cover" autoplay playsinline></video>
@@ -367,6 +372,7 @@
         const closeCameraBtn = document.getElementById('closeCameraBtn');
         const closeCameraBtnX = document.getElementById('closeCameraBtnX');
         const cameraErrorText = document.getElementById('cameraErrorText');
+        const cameraDeviceSelect = document.getElementById('cameraDeviceSelect');
 
         // Inputs
         const dateInput = document.getElementById('dateInput');
@@ -418,21 +424,92 @@
 
         downloadBtn.addEventListener('click', downloadImage);
 
-        // --- Camera Handling ---
-        openCameraBtn.addEventListener('click', async () => {
+        // --- Camera Handling & Lens Selection ---
+        async function startCamera(deviceId = null) {
+            // Hentikan stream yang sedang berjalan sebelum mengganti lensa
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+
+            const constraints = {
+                video: {
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                }
+            };
+
+            // Jika ada spesifik device (lensa tertentu yang dipilih)
+            if (deviceId) {
+                constraints.video.deviceId = { exact: deviceId };
+            } else {
+                // Default pertama kali buka: kamera belakang
+                constraints.video.facingMode = 'environment';
+            }
+
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraVideo.srcObject = cameraStream;
+                cameraErrorText.classList.add('hidden');
+                
+                // Perbarui daftar lensa di dropdown (hanya jika berhasil akses)
+                await updateDeviceList();
+            } catch (err) {
+                cameraErrorText.textContent = "Kamera tidak dapat diakses atau izin ditolak oleh browser.";
+                cameraErrorText.classList.remove('hidden');
+                cameraDeviceSelect.classList.add('hidden');
+            }
+        }
+
+        async function updateDeviceList() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+            
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                // Filter hanya perangkat yang berupa input video (kamera)
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                // Tampilkan dropdown hanya jika ada lebih dari 1 kamera/lensa
+                if (videoDevices.length > 1) {
+                    cameraDeviceSelect.innerHTML = '';
+                    
+                    // Cek ID lensa yang sedang aktif
+                    let activeDeviceId = null;
+                    if (cameraStream && cameraStream.getVideoTracks().length > 0) {
+                        activeDeviceId = cameraStream.getVideoTracks()[0].getSettings().deviceId;
+                    }
+
+                    videoDevices.forEach((device, index) => {
+                        const option = document.createElement('option');
+                        option.value = device.deviceId;
+                        // Label kadang kosong jika belum dapat izin penuh, beri fallback nama
+                        option.text = device.label || `Lensa Kamera ${index + 1}`;
+                        
+                        if (activeDeviceId && device.deviceId === activeDeviceId) {
+                            option.selected = true;
+                        }
+                        cameraDeviceSelect.appendChild(option);
+                    });
+                    
+                    cameraDeviceSelect.classList.remove('hidden');
+                } else {
+                    cameraDeviceSelect.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error("Gagal mendata perangkat kamera:", err);
+            }
+        }
+
+        // Listener saat pengguna memilih lensa lain
+        cameraDeviceSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                startCamera(e.target.value);
+            }
+        });
+
+        openCameraBtn.addEventListener('click', () => {
             cameraModal.classList.remove('hidden');
             cameraErrorText.classList.add('hidden');
-            try {
-                // Request back camera if on mobile, fallback to any available
-                cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } 
-                });
-                cameraVideo.srcObject = cameraStream;
-            } catch (err) {
-                // No alert used! Show message in modal.
-                cameraErrorText.textContent = "Kamera tidak dapat diakses. Mohon periksa izin browser atau perangkat Anda.";
-                cameraErrorText.classList.remove('hidden');
-            }
+            startCamera(); // Mulai kamera tanpa parameter untuk default belakang
         });
 
         function closeCameraModal() {
