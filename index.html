@@ -193,6 +193,10 @@
                         <option value="bw">Classic B&W (Monochrome)</option>
                         <option value="cool">Cool Film (Cinematic Cyan Tint)</option>
                         <option value="matte">70s Matte (Washed Out & Soft)</option>
+                        <option value="lomo">Lomography (Vivid & Cross-Processed)</option>
+                        <option value="warm">Golden Hour (Warm Polaroid 600)</option>
+                        <option value="cyanotype">Cyanotype (Blue Print)</option>
+                        <option value="fadedbw">Faded B&W (Old Newspaper)</option>
                     </select>
                 </div>
             </div>
@@ -401,6 +405,18 @@
             } else if (filterType === 'matte') {
                 ctx.filter = 'sepia(0.2) contrast(0.85) brightness(1.1) saturate(0.75)';
                 overlayColor = 'rgba(120, 80, 50, 0.1)'; // Warm washed out tint
+            } else if (filterType === 'lomo') {
+                ctx.filter = 'contrast(1.4) saturate(1.5) brightness(0.95)';
+                overlayColor = 'rgba(50, 100, 0, 0.1)'; // Subtle green shift for cross-processing
+            } else if (filterType === 'warm') {
+                ctx.filter = 'sepia(0.3) contrast(1.1) saturate(1.2)';
+                overlayColor = 'rgba(255, 120, 0, 0.15)'; // Gold/warm tint
+            } else if (filterType === 'cyanotype') {
+                // Mengubah warna menjadi sepia (coklat), lalu memutar hue (rona warna) 180 derajat menjadikannya biru
+                ctx.filter = 'sepia(1) hue-rotate(180deg) contrast(1.5) brightness(0.9)';
+                overlayColor = 'rgba(0, 50, 100, 0.2)'; // Extra blue depth
+            } else if (filterType === 'fadedbw') {
+                ctx.filter = 'grayscale(1) contrast(0.7) brightness(1.15)';
             } else {
                 ctx.filter = 'none';
             }
